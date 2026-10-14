@@ -1,0 +1,1532 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b3d63">
+<title>Panel Readings</title>
+<style>
+:root{
+  --bg:#f3f5f8; --card:#ffffff; --ink:#14202b; --muted:#5b6b7a; --line:#dbe2ea;
+  --brand:#0b3d63; --brand2:#1463a0; --ok:#12805c; --okbg:#e3f5ee; --warn:#a85d00; --warnbg:#fff1d9; --bad:#b3261e; --badbg:#fde8e6;
+  --shadow:0 1px 2px rgba(10,30,50,.08),0 4px 14px rgba(10,30,50,.06);
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#0e1319; --card:#18202a; --ink:#e8eef4; --muted:#93a3b3; --line:#2a3644; --brand:#6bb3f0; --brand2:#8cc5f5; --ok:#4cd1a0; --okbg:#10352a; --warn:#f0b35a; --warnbg:#3a2a0e; --bad:#ff8b82; --badbg:#3d1714; --shadow:none}
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+body{padding-bottom:calc(88px + env(safe-area-inset-bottom))}
+header.top{position:sticky;top:0;z-index:5;background:var(--brand);color:#fff;padding:calc(10px + env(safe-area-inset-top)) 14px 10px;display:flex;align-items:center;gap:10px}
+@media (prefers-color-scheme:dark){header.top{background:#12202e;color:#e8eef4}}
+header.top h1{font-size:18px;margin:0;flex:1;letter-spacing:.2px}
+header.top button{background:rgba(255,255,255,.16);color:inherit;border:0;border-radius:10px;padding:8px 12px;font-size:14px}
+main{max-width:640px;margin:0 auto;padding:14px}
+.card{background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:14px;margin-bottom:14px}
+.row{display:flex;align-items:center;gap:10px}
+.sp{flex:1}
+.muted{color:var(--muted);font-size:14px}
+.small{font-size:13px}
+h2{font-size:15px;margin:0 0 8px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted)}
+button,.btn{font:inherit;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:12px 14px;min-height:46px;cursor:pointer}
+button.primary,.btn.primary{background:var(--brand2);border-color:var(--brand2);color:#fff;font-weight:600}
+@media (prefers-color-scheme:dark){button.primary,.btn.primary{color:#07131d}}
+button.ghost{background:transparent}
+button.danger{color:var(--bad)}
+button:disabled{opacity:.5}
+.next{border:2px solid var(--brand2)}
+.next .name{font-size:24px;font-weight:700;margin:2px 0 2px}
+.chip{display:inline-block;font-size:12px;padding:2px 8px;border-radius:99px;background:var(--line);color:var(--muted);font-weight:600}
+.chip.S{background:#e6efff;color:#1b4fa3}.chip.C{background:#e8f7e8;color:#1f6b2a}
+@media (prefers-color-scheme:dark){.chip.S{background:#1a2c47;color:#8cb8ff}.chip.C{background:#17301a;color:#7fd98a}}
+.prog{height:8px;background:var(--line);border-radius:99px;overflow:hidden;margin:6px 0 2px}
+.prog>i{display:block;height:100%;background:var(--ok)}
+ul.panels{list-style:none;margin:0;padding:0}
+ul.panels li{display:flex;align-items:center;gap:10px;padding:11px 4px;border-top:1px solid var(--line)}
+ul.panels li:first-child{border-top:0}
+ul.panels .n{flex:1;font-weight:600}
+ul.panels .vals{font-size:12px;color:var(--muted)}
+.st{font-size:12px;font-weight:700;padding:3px 9px;border-radius:99px}
+.st.done{background:var(--okbg);color:var(--ok)}.st.skip{background:var(--line);color:var(--muted)}.st.pend{background:transparent;color:var(--muted);border:1px solid var(--line)}
+.bar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:10px 14px calc(10px + env(safe-area-inset-bottom));display:flex;gap:8px;z-index:6}
+.bar button{flex:1;padding:12px 6px;font-size:14px}
+.banner{padding:10px 12px;border-radius:12px;background:var(--warnbg);color:var(--warn);font-size:14px;margin-bottom:12px}
+.banner.ok{background:var(--okbg);color:var(--ok)}
+/* review */
+.thumbs{display:flex;gap:8px;overflow-x:auto;margin-bottom:10px}
+.thumbs figure{margin:0;flex:0 0 auto}
+.thumbs img{height:110px;border-radius:8px;border:1px solid var(--line);display:block}
+.thumbs figcaption{font-size:12px;color:var(--muted);margin-top:2px}
+.fld{display:grid;grid-template-columns:64px 1fr;gap:4px 10px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.fld:first-of-type{border-top:0}
+.fld label{font-weight:700}
+.fld .inp{display:flex;align-items:center;gap:8px}
+.fld input{width:100%;font:inherit;font-size:22px;font-weight:600;padding:8px 10px;border-radius:10px;border:2px solid var(--line);background:var(--card);color:var(--ink);min-width:0}
+.fld.ok input{border-color:var(--ok)}
+.fld.unsure input,.fld.maybe input{border-color:var(--warn);background:var(--warnbg)}
+.fld.bad input{border-color:var(--bad);background:var(--badbg)}
+.fld .tag{font-size:12px;font-weight:700;white-space:nowrap}
+.fld.ok .tag{color:var(--ok)}.fld.unsure .tag,.fld.maybe .tag{color:var(--warn)}.fld.bad .tag{color:var(--bad)}
+.fld .seen{grid-column:2;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+.fld .seen img{height:26px;border-radius:4px;background:#fff;border:1px solid var(--line);max-width:60%}
+.checks{margin:10px 0 0;padding:0;list-style:none;font-size:14px}
+.checks li{padding:8px 10px;border-radius:10px;background:var(--warnbg);color:var(--warn);margin-top:6px}
+.checks li.good{background:var(--okbg);color:var(--ok)}
+textarea{width:100%;min-height:200px;font:14px/1.5 ui-monospace,Menlo,Consolas,monospace;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink)}
+input.text,select{font:inherit;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);width:100%}
+label.chk{display:flex;gap:10px;align-items:center;padding:8px 0}
+label.chk input{width:22px;height:22px}
+/* camera */
+#cam{position:fixed;inset:0;background:#000;z-index:20;color:#fff}
+#cam[hidden]{display:none}
+#cam video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000}
+#cam canvas#ov{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.cam-top{position:absolute;left:0;right:0;top:0;padding:calc(10px + env(safe-area-inset-top)) 14px 24px;background:linear-gradient(#000c,#0000)}
+.cam-top .t1{font-weight:700;font-size:18px}.cam-top .t2{font-size:14px;opacity:.9}
+.cam-status{position:absolute;left:14px;right:14px;bottom:calc(150px + env(safe-area-inset-bottom));text-align:center;font-weight:700;font-size:17px;padding:10px 12px;border-radius:12px;background:#000a}
+.cam-status.red{color:#ff8b82}.cam-status.yellow{color:#ffd36b}.cam-status.green{color:#6df0b0}
+.cam-bottom{position:absolute;left:0;right:0;bottom:0;padding:14px 14px calc(16px + env(safe-area-inset-bottom));background:linear-gradient(#0000,#000d);display:flex;align-items:center;justify-content:space-between;gap:10px}
+.cam-bottom button,.cam-bottom .btn{background:#ffffff26;color:#fff;border:0;min-width:84px;font-size:14px;text-align:center}
+.shot{width:74px;height:74px;border-radius:50%!important;background:#fff!important;border:6px solid #ffffff88!important;min-width:0!important;padding:0!important}
+#busy{position:fixed;inset:0;background:#000b;color:#fff;z-index:30;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;font-size:18px}
+#busy[hidden]{display:none}
+.spin{width:38px;height:38px;border-radius:50%;border:4px solid #fff4;border-top-color:#fff;animation:sp 1s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(100px + env(safe-area-inset-bottom));background:#14202bee;color:#fff;padding:10px 16px;border-radius:12px;z-index:40;font-size:14px;max-width:90%;text-align:center}
+#toast[hidden]{display:none}
+.toplink{background:none;border:0;color:var(--brand2);padding:6px 0;min-height:0;text-decoration:underline;font-size:14px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<div id="cam" hidden>
+  <video id="vid" playsinline muted autoplay></video>
+  <canvas id="ov"></canvas>
+  <div class="cam-top"><div class="t1" id="camT1"></div><div class="t2" id="camT2"></div></div>
+  <div class="cam-status red" id="camStatus">Starting camera…</div>
+  <div class="cam-bottom">
+    <button id="camCancel">Cancel</button>
+    <button id="camShot" class="shot" aria-label="Take photo"></button>
+    <label class="btn" for="fileIn">From photo<input type="file" id="fileIn" accept="image/*" hidden></label>
+  </div>
+  <div style="position:absolute;right:14px;top:calc(12px + env(safe-area-inset-top));display:flex;gap:8px">
+    <button id="camAuto" style="background:#ffffff26;color:#fff;border:0;padding:8px 12px;min-height:0;font-size:13px">Auto: on</button>
+    <button id="camSkip" style="background:#ffffff26;color:#fff;border:0;padding:8px 12px;min-height:0;font-size:13px">Not in use</button>
+  </div>
+</div>
+<div id="busy" hidden><div class="spin"></div><div id="busyMsg">Reading…</div></div>
+<div id="toast" hidden></div>
+
+<script>
+/* Core image + parsing logic. Works in a browser (window.Core) and in node (module.exports).
+   All image functions work on plain {data:Uint8ClampedArray(RGBA), width, height} objects. */
+(function (root) {
+  'use strict';
+
+  // ---------- basic image helpers ----------
+  function toGray(img) {
+    const { data, width, height } = img;
+    const g = new Float32Array(width * height);
+    for (let i = 0, j = 0; i < g.length; i++, j += 4) {
+      g[i] = 0.299 * data[j] + 0.587 * data[j + 1] + 0.114 * data[j + 2];
+    }
+    return { g, width, height };
+  }
+
+  // Replace reddish pixels (hand-drawn marker boxes in test photos) with background colour.
+  // The screen ink is blue/purple (blue > red), so it is never touched.
+  function removeRed(img) {
+    const { data } = img;
+    for (let j = 0; j < data.length; j += 4) {
+      const r = data[j], gg = data[j + 1], b = data[j + 2];
+      if (r > 110 && r - Math.max(gg, b) > 18) { data[j] = 232; data[j + 1] = 234; data[j + 2] = 238; }
+    }
+    return img;
+  }
+
+  function boxBlur(gray, radius) {
+    if (radius < 1) return gray;
+    const { g, width: w, height: h } = gray;
+    const r = Math.round(radius);
+    const tmp = new Float32Array(g.length);
+    const out = new Float32Array(g.length);
+    for (let y = 0; y < h; y++) {
+      let sum = 0, cnt = 0;
+      const row = y * w;
+      for (let x = -r; x <= r; x++) { if (x >= 0 && x < w) { sum += g[row + x]; cnt++; } }
+      for (let x = 0; x < w; x++) {
+        tmp[row + x] = sum / cnt;
+        const add = x + r + 1, rem = x - r;
+        if (add < w) { sum += g[row + add]; cnt++; }
+        if (rem >= 0) { sum -= g[row + rem]; cnt--; }
+      }
+    }
+    for (let x = 0; x < w; x++) {
+      let sum = 0, cnt = 0;
+      for (let y = -r; y <= r; y++) { if (y >= 0 && y < h) { sum += tmp[y * w + x]; cnt++; } }
+      for (let y = 0; y < h; y++) {
+        out[y * w + x] = sum / cnt;
+        const add = y + r + 1, rem = y - r;
+        if (add < h) { sum += tmp[add * w + x]; cnt++; }
+        if (rem >= 0) { sum -= tmp[rem * w + x]; cnt--; }
+      }
+    }
+    return { g: out, width: w, height: h };
+  }
+
+  function otsu(values) {
+    const hist = new Float64Array(256);
+    for (let i = 0; i < values.length; i++) hist[Math.max(0, Math.min(255, values[i] | 0))]++;
+    const total = values.length;
+    let sumAll = 0;
+    for (let t = 0; t < 256; t++) sumAll += t * hist[t];
+    let wB = 0, sumB = 0, best = 0, thr = 128;
+    for (let t = 0; t < 256; t++) {
+      wB += hist[t];
+      if (!wB) continue;
+      const wF = total - wB;
+      if (!wF) break;
+      sumB += t * hist[t];
+      const mB = sumB / wB, mF = (sumAll - sumB) / wF;
+      const between = wB * wF * (mB - mF) * (mB - mF);
+      if (between > best) { best = between; thr = t; }
+    }
+    return thr;
+  }
+
+  // ---------- find the lit LCD rectangle inside a frame ----------
+  // Runs of values >= minVal, bridging gaps up to maxGap, return the longest as [start,end]
+  function longestRun(arr, minVal, maxGap) {
+    const runs = [];
+    let s = -1;
+    for (let i = 0; i <= arr.length; i++) {
+      const ok = i < arr.length && arr[i] >= minVal;
+      if (ok && s < 0) s = i;
+      if (!ok && s >= 0) { runs.push([s, i - 1]); s = -1; }
+    }
+    if (!runs.length) return null;
+    const merged = [runs[0].slice()];
+    for (let k = 1; k < runs.length; k++) {
+      const last = merged[merged.length - 1];
+      if (runs[k][0] - last[1] - 1 <= maxGap) last[1] = runs[k][1]; else merged.push(runs[k].slice());
+    }
+    merged.sort((a, b) => (b[1] - b[0]) - (a[1] - a[0]));
+    return merged[0];
+  }
+
+  // Returns {x0,y0,x1,y1} in pixels of the frame, or null.
+  // A backlit screen has at least one bright colour channel everywhere; the bezel is dark.
+  function findLcdSimple(img) {
+    const w = img.width, h = img.height, d = img.data;
+    const scale = Math.min(1, 240 / Math.max(w, h));
+    const sw = Math.max(8, Math.round(w * scale)), sh = Math.max(8, Math.round(h * scale));
+    const small = new Float32Array(sw * sh);
+    const cnt = new Float32Array(sw * sh);
+    for (let y = 0; y < h; y++) {
+      const sy = Math.min(sh - 1, Math.floor(y * scale));
+      for (let x = 0; x < w; x++) {
+        const j = (y * w + x) * 4;
+        const v = Math.max(d[j], d[j + 1], d[j + 2]);
+        const k = sy * sw + Math.min(sw - 1, Math.floor(x * scale));
+        small[k] += v; cnt[k]++;
+      }
+    }
+    for (let i = 0; i < small.length; i++) small[i] = cnt[i] ? small[i] / cnt[i] : 0;
+    const thr = otsu(small);
+    const mask = new Uint8Array(sw * sh);
+    for (let i = 0; i < mask.length; i++) mask[i] = small[i] > thr ? 1 : 0;
+    let x0 = 0, x1 = sw - 1, y0 = 0, y1 = sh - 1;
+    for (let iter = 0; iter < 3; iter++) {
+      const cols = new Float32Array(sw);
+      let cmax = 0;
+      for (let x = x0; x <= x1; x++) { let c = 0; for (let y = y0; y <= y1; y++) c += mask[y * sw + x]; cols[x] = c; if (c > cmax) cmax = c; }
+      const rx = longestRun(cols, cmax * 0.5, Math.round(sw * 0.04));
+      if (!rx) return null;
+      x0 = rx[0]; x1 = rx[1];
+      const rows = new Float32Array(sh);
+      let rmax = 0;
+      for (let y = y0; y <= y1; y++) { let c = 0; for (let x = x0; x <= x1; x++) c += mask[y * sw + x]; rows[y] = c; if (c > rmax) rmax = c; }
+      const ry = longestRun(rows, rmax * 0.5, Math.round(sh * 0.04));
+      if (!ry) return null;
+      y0 = ry[0]; y1 = ry[1];
+    }
+    const box = { x0: Math.round(x0 / scale), y0: Math.round(y0 / scale), x1: Math.min(w, Math.round((x1 + 1) / scale)), y1: Math.min(h, Math.round((y1 + 1) / scale)) };
+    const bw = box.x1 - box.x0, bh = box.y1 - box.y0;
+    if (bw < w * 0.35 || bh < h * 0.25) return null;
+    return box;
+  }
+
+
+  // ---------- robust screen finder: candidate rectangles, scored by shape and dark bezel ----------
+  function findLcd(img) {
+    const w = img.width, h = img.height, d = img.data;
+    const sc = Math.min(1, 320 / Math.max(w, h)), sw = Math.max(8, Math.round(w * sc)), sh = Math.max(8, Math.round(h * sc));
+    const v = new Float32Array(sw * sh), cnt = new Float32Array(sw * sh);
+    for (let y = 0; y < h; y++) {
+      const sy = Math.min(sh - 1, Math.floor(y * sc)), o = y * w * 4;
+      for (let x = 0; x < w; x++) {
+        const j = o + x * 4, m = Math.max(d[j], d[j + 1], d[j + 2]), k = sy * sw + Math.min(sw - 1, Math.floor(x * sc));
+        v[k] += m; cnt[k]++;
+      }
+    }
+    for (let i = 0; i < v.length; i++) v[i] = cnt[i] ? v[i] / cnt[i] : 0;
+    const thr = otsu(v);
+    let mask = new Uint8Array(sw * sh);
+    for (let i = 0; i < mask.length; i++) mask[i] = v[i] > thr ? 1 : 0;
+    // closing (dilate then erode) to bridge text holes inside the screen
+    const R = Math.max(1, Math.round(sw / 150));
+    const morph = (m, grow) => {
+      const t = new Uint8Array(m.length), o = new Uint8Array(m.length);
+      for (let y = 0; y < sh; y++) for (let x = 0; x < sw; x++) {
+        let hit = grow ? 0 : 1;
+        for (let k = -R; k <= R; k++) { const xx = x + k; const val = xx < 0 || xx >= sw ? (grow ? 0 : 1) : m[y * sw + xx]; if (grow) { if (val) { hit = 1; break; } } else if (!val) { hit = 0; break; } }
+        t[y * sw + x] = hit;
+      }
+      for (let y = 0; y < sh; y++) for (let x = 0; x < sw; x++) {
+        let hit = grow ? 0 : 1;
+        for (let k = -R; k <= R; k++) { const yy = y + k; const val = yy < 0 || yy >= sh ? (grow ? 0 : 1) : t[yy * sw + x]; if (grow) { if (val) { hit = 1; break; } } else if (!val) { hit = 0; break; } }
+        o[y * sw + x] = hit;
+      }
+      return o;
+    };
+    mask = morph(morph(mask, true), false);
+    // connected components
+    const lab = new Int32Array(sw * sh).fill(-1), comps = [], stack = [];
+    for (let s = 0; s < mask.length; s++) {
+      if (!mask[s] || lab[s] >= 0) continue;
+      const id = comps.length; let area = 0, x0 = sw, y0 = sh, x1 = -1, y1 = -1;
+      stack.push(s); lab[s] = id;
+      while (stack.length) {
+        const p = stack.pop(), px = p % sw, py = (p / sw) | 0; area++;
+        if (px < x0) x0 = px; if (px > x1) x1 = px; if (py < y0) y0 = py; if (py > y1) y1 = py;
+        if (px > 0 && mask[p - 1] && lab[p - 1] < 0) { lab[p - 1] = id; stack.push(p - 1); }
+        if (px < sw - 1 && mask[p + 1] && lab[p + 1] < 0) { lab[p + 1] = id; stack.push(p + 1); }
+        if (py > 0 && mask[p - sw] && lab[p - sw] < 0) { lab[p - sw] = id; stack.push(p - sw); }
+        if (py < sh - 1 && mask[p + sw] && lab[p + sw] < 0) { lab[p + sw] = id; stack.push(p + sw); }
+      }
+      comps.push({ area, x0, y0, x1, y1 });
+    }
+    let best = null;
+    for (const c of comps) {
+      const bw = c.x1 - c.x0 + 1, bh = c.y1 - c.y0 + 1, area = bw * bh;
+      if (typeof DEBUG_LCD !== 'undefined' && area >= 0.02 * sw * sh) console.log('cand', c.x0, c.y0, c.x1, c.y1, 'asp', (bw / bh).toFixed(2), 'fill', (c.area / area).toFixed(2), 'thr', thr);
+      if (area < 0.03 * sw * sh) continue;
+      const asp = bw / bh; if (asp < 1.35 || asp > 2.35) continue;
+      const fill = c.area / area; if (fill < 0.55) continue;
+      // ring just outside the box must be mostly dark (the bezel)
+      const m = Math.max(2, Math.round(0.04 * Math.max(bw, bh)));
+      let ringN = 0, ringDark = 0;
+      for (let y = c.y0 - m; y <= c.y1 + m; y++) for (let x = c.x0 - m; x <= c.x1 + m; x++) {
+        if (x >= c.x0 && x <= c.x1 && y >= c.y0 && y <= c.y1) continue;
+        if (x < 0 || y < 0 || x >= sw || y >= sh) continue;
+        ringN++; if (v[y * sw + x] <= thr) ringDark++;
+      }
+      const ring = ringN > 0 ? ringDark / ringN : 1;
+      if (typeof DEBUG_LCD !== 'undefined') console.log('  ring', ring.toFixed(2), 'm', m);
+      if (ring < 0.55) continue;
+      const aspW = Math.exp(-Math.pow((asp - 1.75) / 0.35, 2));
+      const touch = (c.x0 <= 0 ? 1 : 0) + (c.y0 <= 0 ? 1 : 0) + (c.x1 >= sw - 1 ? 1 : 0) + (c.y1 >= sh - 1 ? 1 : 0);
+      const fills = bw >= 0.8 * sw && bh >= 0.8 * sh;          // close-up: the screen fills the whole photo
+      const edgeW = fills ? 1 : Math.pow(0.3, touch);
+      const score = c.area * fill * ring * aspW * edgeW;
+      if (!best || score > best.score) best = { score, c };
+    }
+    if (!best) return findLcdSimple(img);
+    const c = best.c, pad = Math.round(0.03 * Math.max(sw, sh));
+    const rx0 = Math.max(0, Math.round((c.x0 - pad) / sc)), ry0 = Math.max(0, Math.round((c.y0 - pad) / sc));
+    const rx1 = Math.min(w, Math.round((c.x1 + 1 + pad) / sc)), ry1 = Math.min(h, Math.round((c.y1 + 1 + pad) / sc));
+    const cw = rx1 - rx0, ch = ry1 - ry0, sub = new Uint8ClampedArray(cw * ch * 4);
+    for (let y = 0; y < ch; y++) sub.set(d.subarray(((y + ry0) * w + rx0) * 4, ((y + ry0) * w + rx0 + cw) * 4), y * cw * 4);
+    const r = findLcdSimple({ data: sub, width: cw, height: ch });
+    if (!r) return null;
+    return { x0: r.x0 + rx0, y0: r.y0 + ry0, x1: r.x1 + rx0, y1: r.y1 + ry0 };
+  }
+
+  // ---------- number parsing ----------
+  // Accepts messy OCR text, returns {value, text} or null
+  function parseNumber(raw, opts) {
+    opts = opts || {};
+    let t = String(raw || '').replace(/[\s_]/g, '');
+    // common dot-matrix confusions
+    t = t.replace(/[Oo]/g, '0').replace(/[Il|]/g, '1').replace(/S/g, '5').replace(/B/g, '8').replace(/,/g, '.');
+    t = t.replace(/[—–−~]/g, '-');
+    const m = t.match(/-?\d+(\.\d+)?/);
+    if (!m) return null;
+    let s = m[0];
+    // a minus sign is only valid at the very start
+    return { value: parseFloat(s), text: s };
+  }
+
+  // rotate an RGBA image by a degrees (bilinear), edges clamped
+  function rotateImage(img, a) {
+    const w = img.width, h = img.height, rad = a * Math.PI / 180, c = Math.cos(rad), s = Math.sin(rad);
+    const out = new Uint8ClampedArray(w * h * 4), cx = w / 2, cy = h / 2, d = img.data;
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      // inverse of the forward mapping used by the tilt search: y' = y c - x s, x' = x c + y s
+      const dx = x - cx, dy = y - cy;
+      let sx = dx * c - dy * s + cx, sy = dx * s + dy * c + cy;
+      sx = Math.max(0, Math.min(w - 1.001, sx)); sy = Math.max(0, Math.min(h - 1.001, sy));
+      const x0 = sx | 0, y0 = sy | 0, fx = sx - x0, fy = sy - y0, i00 = (y0 * w + x0) * 4, i10 = i00 + 4, i01 = i00 + w * 4, i11 = i01 + 4, o = (y * w + x) * 4;
+      for (let k = 0; k < 4; k++) out[o + k] = d[i00 + k] * (1 - fx) * (1 - fy) + d[i10 + k] * fx * (1 - fy) + d[i01 + k] * (1 - fx) * fy + d[i11 + k] * fx * fy;
+    }
+    return { data: out, width: w, height: h };
+  }
+
+  // ---------- sharpness of a screen crop (for the live guide) ----------
+  // img: RGBA crop of the screen, ideally ~640 px wide. Returns {metric, contrast, glare}
+  function sharpness(img) {
+    const w = img.width, h = img.height, g = toGray(img).g;
+    const grads = [], all = [];
+    let glare = 0;
+    for (let y = 1; y < h - 1; y++) for (let x = 1; x < w - 1; x++) {
+      const i = y * w + x;
+      const gx = Math.abs(g[i + 1] - g[i - 1]), gy = Math.abs(g[i + w] - g[i - w]);
+      grads.push(gx > gy ? gx : gy); all.push(g[i]);
+      const j = i * 4; if (img.data[j] > 251 && img.data[j + 1] > 251 && img.data[j + 2] > 251) glare++;
+    }
+    if (!all.length) return { metric: 0, contrast: 0, glare: 0 };
+    all.sort((a, b) => a - b);
+    const contrast = all[Math.floor(all.length * 0.97)] - all[Math.floor(all.length * 0.03)];
+    grads.sort((a, b) => a - b);
+    let top = 0, n = 0;
+    for (let i = Math.floor(grads.length * 0.97); i < grads.length; i++) { top += grads[i]; n++; }
+    return { metric: (top / Math.max(1, n)) / Math.max(10, contrast), contrast, glare: glare / all.length };
+  }
+
+  // ---------- cross-checks between the readings of one panel ----------
+  const SQRT3 = Math.sqrt(3);
+  const isNum = (v) => typeof v === 'number' && isFinite(v);
+  // v: {A, PF, kW, kVA, kVAR} (numbers or null); kv: line voltage in kV
+  // returns {issues:{field:{level,hint}}, messages:[...], ok:boolean}
+  function checkAll(v, kv) {
+    kv = kv || 33;
+    const res = { issues: {}, messages: [], ok: true };
+    const checks = [];
+    if (isNum(v.kW) && isNum(v.kVAR) && isNum(v.kVA)) {
+      const calc = Math.sqrt(v.kW * v.kW + v.kVAR * v.kVAR);
+      checks.push({ id: 'S', fields: ['kW', 'kVAR', 'kVA'], pass: Math.abs(calc - v.kVA) <= Math.max(2, 0.02 * Math.max(calc, v.kVA)),
+        msg: 'kVA (' + v.kVA + ') should be about ' + Math.round(calc) + ' from kW and kVAR' });
+    }
+    if (isNum(v.kW) && isNum(v.kVA) && isNum(v.PF) && v.kVA >= 20) {
+      const calc = Math.min(1, Math.abs(v.kW) / v.kVA);
+      checks.push({ id: 'P', fields: ['kW', 'kVA', 'PF'], pass: Math.abs(calc - Math.abs(v.PF)) <= 0.03,
+        msg: 'P.F. (' + v.PF + ') should be about ' + calc.toFixed(2) + ' from kW / kVA' });
+    }
+    if (isNum(v.A) && isNum(v.kVA)) {
+      const calc = v.kVA / (SQRT3 * kv);
+      checks.push({ id: 'A', fields: ['A', 'kVA'], pass: Math.abs(calc - v.A) <= Math.max(1.5, 0.1 * calc),
+        msg: 'Current (' + v.A + ' A) should be about ' + calc.toFixed(1) + ' A at ' + kv + ' kV for this kVA' });
+    }
+    const failing = checks.filter(c => !c.pass), passing = checks.filter(c => c.pass);
+    if (!failing.length) return res;
+    res.ok = false;
+    const vouched = new Set(); passing.forEach(c => c.fields.forEach(f => vouched.add(f)));
+    for (const c of failing) {
+      res.messages.push(c.msg);
+      let blame = c.fields.filter(f => !vouched.has(f));
+      const soft = blame.length === 0; if (soft) blame = c.fields;
+      for (const f of blame) {
+        const prev = res.issues[f];
+        res.issues[f] = { level: soft ? 'maybe' : 'check', count: (prev ? prev.count : 0) + 1 };
+      }
+    }
+    return res;
+  }
+
+  const api = { rotateImage, toGray, removeRed, boxBlur, otsu, findLcd, sharpness, checkAll };
+  if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.Core = api;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+/* Dot-matrix reader for the Schneider (Sepam / Easergy style) 5x7 LCD font.
+   Works in node and in the browser. Pure functions on {data,width,height} RGBA images. */
+(function (root) {
+  'use strict';
+  const Core = (typeof require !== 'undefined' && typeof module !== 'undefined') ? require('./core.js') : root.Core;
+
+  // ---- ink map: 0 = background, 1 = full ink, same size as the LCD box ----
+  function inkMap(img, box) {
+    const w = box.x1 - box.x0, h = box.y1 - box.y0;
+    const g = Core.toGray(img);
+    const vals = [];
+    for (let y = box.y0; y < box.y1; y += 2) for (let x = box.x0; x < box.x1; x += 2) vals.push(g.g[y * img.width + x]);
+    vals.sort((a, b) => a - b);
+    const bg = vals[Math.floor(vals.length * 0.85)], fg = vals[Math.floor(vals.length * 0.01)];
+    const span = Math.max(20, bg - fg);
+    const ink = new Float32Array(w * h);
+    for (let y = 0; y < h; y++) {
+      const o = (y + box.y0) * img.width + box.x0;
+      for (let x = 0; x < w; x++) {
+        const v = (bg - g.g[o + x]) / span;
+        ink[y * w + x] = v < 0 ? 0 : v > 1 ? 1 : v;
+      }
+    }
+    return { ink, w, h, contrast: bg - fg };
+  }
+
+  // strongest period of a 1-D profile within [pmin,pmax]; returns first peak offset >= 0
+  function periodic(v, pmin, pmax, steps) {
+    steps = steps || 300;
+    let mean = 0; for (let i = 0; i < v.length; i++) mean += v[i]; mean /= v.length;
+    const d = new Float32Array(v.length); for (let i = 0; i < v.length; i++) d[i] = v[i] - mean;
+    let best = { mag: -1, p: pmin, phase: 0 };
+    for (let s = 0; s <= steps; s++) {
+      const p = pmin + (pmax - pmin) * s / steps, k = 2 * Math.PI / p;
+      let re = 0, im = 0;
+      for (let i = 0; i < d.length; i++) { re += d[i] * Math.cos(k * i); im += d[i] * Math.sin(k * i); }
+      const mag = Math.hypot(re, im);
+      if (mag > best.mag) best = { mag, p, phase: Math.atan2(im, re) };
+    }
+    let off = (best.phase / (2 * Math.PI)) * best.p; while (off < 0) off += best.p;
+    best.off = off;
+    return best;
+  }
+
+  function at(map, x, y) {
+    const xi = Math.round(x), yi = Math.round(y);
+    if (xi < 0 || yi < 0 || xi >= map.w || yi >= map.h) return 0;
+    return map.ink[yi * map.w + xi];
+  }
+
+  // Fit the LCD dot grid: pitches px, py and phases ox, oy (dot centres at ox+i*px, oy+j*py)
+  function fitGrid(map) {
+    const w = map.w, h = map.h;
+    const xa = Math.round(w * 0.5), ya = Math.round(h * 0.15), yb = Math.round(h * 0.88);
+    const p0 = w / 140;
+    const col = new Float32Array(w - xa), row = new Float32Array(yb - ya);
+    for (let y = ya; y < yb; y++) for (let x = xa; x < w; x++) { const v = map.ink[y * w + x]; col[x - xa] += v; row[y - ya] += v; }
+    const gx = periodic(col, p0 * 0.8, p0 * 1.2, 300), gy = periodic(row, p0 * 0.8, p0 * 1.2, 300);
+    let g = { px: gx.p, py: gy.p, ox: xa + gx.off, oy: ya + gy.off };
+    for (let it = 0; it < 2; it++) {
+      // columns: sum the ink along dot-row centres only
+      const c2 = new Float32Array(w - xa);
+      for (let y = g.oy; y < yb; y += g.py) for (let x = xa; x < w; x++) c2[x - xa] += at(map, x, y);
+      const fx = periodic(c2, g.px * 0.97, g.px * 1.03, 240);
+      g.px = fx.p; g.ox = xa + fx.off;
+      const r2 = new Float32Array(yb - ya);
+      for (let x = g.ox; x < w; x += g.px) for (let y = ya; y < yb; y++) r2[y - ya] += at(map, x, y);
+      const fy = periodic(r2, g.py * 0.97, g.py * 1.03, 240);
+      g.py = fy.p; g.oy = ya + fy.off;
+    }
+    g.p0 = p0;
+    return g;
+  }
+
+  // sample every dot position (window mean) over the right half of the LCD
+  function sampleDots(map, g) {
+    const rows = Math.floor((map.h * 0.97 - g.oy) / g.py);
+    const i0 = Math.ceil((map.w * 0.5 - g.ox) / g.px);
+    const cols = Math.floor((map.w - 2 - g.ox) / g.px) - i0;
+    const hw = 0.28 * g.px, hh = 0.28 * g.py;
+    const D = [];
+    for (let j = 0; j < rows; j++) {
+      const r = new Float32Array(cols);
+      const cy = g.oy + j * g.py;
+      for (let i = 0; i < cols; i++) {
+        const cx = g.ox + (i0 + i) * g.px;
+        let s = 0, n = 0;
+        for (let y = Math.round(cy - hh); y <= Math.round(cy + hh); y++) for (let x = Math.round(cx - hw); x <= Math.round(cx + hw); x++) { s += at(map, x, y); n++; }
+        r[i] = n ? s / n : 0;
+      }
+      D.push(r);
+    }
+    return { D, rows, cols, i0 };
+  }
+
+  // lines are 7 dot-rows tall with one blank separator row: find which row residue (mod 8) is blank
+  function blankResidue(S, g, map) {
+    const ja = Math.ceil((map.h * 0.15 - g.oy) / g.py), jb = Math.min(S.rows, Math.floor((map.h * 0.9 - g.oy) / g.py));
+    const sum = new Float32Array(8), cnt = new Float32Array(8);
+    for (let j = Math.max(0, ja); j < jb; j++) { let s = 0; for (let i = 0; i < S.cols; i++) s += S.D[j][i]; sum[j % 8] += s; cnt[j % 8]++; }
+    let best = 0, bv = 1e9;
+    for (let r = 0; r < 8; r++) { const v = sum[r] / Math.max(1, cnt[r]); if (v < bv) { bv = v; best = r; } }
+    return best;
+  }
+
+  // top dot-row of the line whose vertical centre is expected at relative height yrel (0..1 of LCD height)
+  function lineTop(yrel, map, g, resid) {
+    const jc = (yrel * map.h - g.oy) / g.py;
+    const want = jc - 3;                       // top row of a 7-row line
+    // tops are rows with (j % 8) == (resid+1) % 8
+    const m = (resid + 1) % 8;
+    let best = -1, bd = 1e9;
+    for (let j = 0; j < 200; j++) if (j % 8 === m) { const d = Math.abs(j - want); if (d < bd) { bd = d; best = j; } }
+    return best;
+  }
+
+  function otsuVals(vals) {
+    const hist = new Float64Array(64);
+    for (const v of vals) hist[Math.min(63, Math.max(0, Math.floor(v * 64)))]++;
+    const tot = vals.length; let sumAll = 0; for (let t = 0; t < 64; t++) sumAll += t * hist[t];
+    let wB = 0, sumB = 0, best = -1, thr = 0.5 * 64;
+    for (let t = 0; t < 64; t++) {
+      wB += hist[t]; if (!wB) continue; const wF = tot - wB; if (!wF) break;
+      sumB += t * hist[t]; const mB = sumB / wB, mF = (sumAll - sumB) / wF;
+      const bt = wB * wF * (mB - mF) * (mB - mF); if (bt > best) { best = bt; thr = t; }
+    }
+    return (thr + 1) / 64;
+  }
+
+  // Cut a 7-row line into glyph bitmaps. Returns {glyphs:[{x,w,rows:[string x7]}], thr}
+  function extractLine(S, top) {
+    if (top < 0 || top + 7 > S.rows) return null;
+    const block = [];
+    const all = [];
+    for (let j = 0; j < 7; j++) { block.push(S.D[top + j]); for (let i = 0; i < S.cols; i++) all.push(S.D[top + j][i]); }
+    let mx = 0; for (const v of all) if (v > mx) mx = v;
+    if (mx < 0.35) return { glyphs: [], thr: 1, max: mx };           // nothing lit on this line
+    const thr = Math.max(0.3, Math.min(0.62, otsuVals(all)));
+    const on = new Array(S.cols).fill(false);
+    for (let i = 0; i < S.cols; i++) for (let j = 0; j < 7; j++) if (block[j][i] > thr) { on[i] = true; break; }
+    const glyphs = [];
+    let i = 0;
+    while (i < S.cols) {
+      if (!on[i]) { i++; continue; }
+      let k = i; while (k < S.cols && on[k]) k++;
+      const rows = [];
+      for (let j = 0; j < 7; j++) { let s = ''; for (let c = i; c < k; c++) s += block[j][c] > thr ? '#' : '.'; rows.push(s); }
+      glyphs.push({ x: i, w: k - i, rows });
+      i = k;
+    }
+    return { glyphs, thr, max: mx };
+  }
+
+
+  // ---- per-line fine alignment: search small x/y offsets and x scale that make the dots sample strongest ----
+  function sampleLine(map, g, top, dx, sx, dy) {
+    const i0 = Math.ceil((map.w * 0.5 - g.ox) / g.px);
+    const cols = Math.floor((map.w - 2 - g.ox) / (g.px * (1 + sx))) - i0;
+    const hw = 0.28 * g.px, hh = 0.28 * g.py;
+    const R = [];
+    for (let j = 0; j < 7; j++) {
+      const r = new Float32Array(Math.max(0, cols));
+      const cy = g.oy + dy + (top + j) * g.py;
+      for (let i = 0; i < cols; i++) {
+        const cx = g.ox + dx + (i0 + i) * g.px * (1 + sx);
+        let s = 0, n = 0;
+        for (let y = Math.round(cy - hh); y <= Math.round(cy + hh); y++) for (let x = Math.round(cx - hw); x <= Math.round(cx + hw); x++) { s += at(map, x, y); n++; }
+        r[i] = n ? s / n : 0;
+      }
+      R.push(r);
+    }
+    return R;
+  }
+  function lineScore(R) { let s = 0; for (const r of R) for (let i = 0; i < r.length; i++) s += r[i] * r[i]; return s; }
+
+  function alignedLine(map, g, top) {
+    let best = { score: -1, dx: 0, sx: 0, dy: 0 };
+    const tryit = (dx, sx, dy) => { const sc = lineScore(sampleLine(map, g, top, dx, sx, dy)); if (sc > best.score) best = { score: sc, dx, sx, dy }; };
+    for (let a = -3; a <= 3; a++) for (let b = -2; b <= 2; b++) for (let c = -2; c <= 2; c++) tryit(a * 0.1 * g.px, b * 0.01, c * 0.12 * g.py);
+    const c0 = best;
+    for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) for (let c = -1; c <= 1; c++) tryit(c0.dx + a * 0.05 * g.px, c0.sx + b * 0.005, c0.dy + c * 0.06 * g.py);
+    return { R: sampleLine(map, g, top, best.dx, best.sx, best.dy), fit: best };
+  }
+
+  function cutGlyphs(R) {
+    const cols = R[0].length;
+    let mx = 0; const all = [];
+    for (const r of R) for (let i = 0; i < cols; i++) { all.push(r[i]); if (r[i] > mx) mx = r[i]; }
+    if (mx < 0.35) return { glyphs: [], thr: 1, max: mx };
+    const thr = Math.max(0.3, Math.min(0.62, otsuVals(all)));
+    const on = new Array(cols).fill(false);
+    for (let i = 0; i < cols; i++) for (let j = 0; j < 7; j++) if (R[j][i] > thr) { on[i] = true; break; }
+    const glyphs = [];
+    for (let i = 0; i < cols;) {
+      if (!on[i]) { i++; continue; }
+      let k = i; while (k < cols && on[k]) k++;
+      const rows = [];
+      for (let j = 0; j < 7; j++) { let s = ''; for (let c = i; c < k; c++) s += R[j][c] > thr ? '#' : '.'; rows.push(s); }
+      glyphs.push({ x: i, w: k - i, rows });
+      i = k;
+    }
+    return { glyphs, thr, max: mx };
+  }
+
+  // ---- font table (5x7 dot matrix). Built from real photos; '8' from the standard font of this family ----
+  const FONT = {
+    '0': ['.###./#...#/#..##/#.#.#/##..#/#...#/.###.'],
+    '1': ['..#../.##../..#../..#../..#../..#../#####'],
+    '2': ['.###./#...#/....#/...#./..#../.#.../#####'],
+    '3': ['#####/...#./..#../...#./....#/#...#/.###.'],
+    '4': ['...#./..##./.#.#./#..#./#####/...#./...#.'],
+    '5': ['#####/#..../####./....#/....#/#...#/.###.'],
+    '6': ['..##./.#.../#..../####./#...#/#...#/.###.'],
+    '7': ['#####/....#/...#./..#../.#.../.#.../.#...'],
+    '8': ['.###./#...#/#...#/.###./#...#/#...#/.###.'],
+    '9': ['.###./#...#/#...#/.####/....#/...#./.##..'],
+    '-': ['...../...../...../#####/...../...../.....', '..../..../..../####/..../..../....'],
+    '.': ['../../../../../##/##'],
+    '*': ['.##./#..#/#..#/.##./..../..../....'],
+    'k': ['#.../#.../#..#/#.#./##../#.#./#..#'],
+    'W': ['#...#/#...#/#...#/#.#.#/#.#.#/#.#.#/.#.#.'],
+    'V': ['#...#/#...#/#...#/#...#/#...#/.#.#./..#..'],
+    'A': ['.###./#...#/#...#/#...#/#####/#...#/#...#'],
+    'H': ['#...#/#...#/#...#/#####/#...#/#...#/#...#'],
+    'v': ['...../...../#...#/#...#/#...#/.#.#./..#..'],
+    'a': ['...../...../.###./....#/.####/#...#/.####'],
+    'r': ['...../...../#.##./##..#/#..../#..../#....'],
+    'z': ['...../...../#####/...#./..#../.#.../#####'],
+  };
+  let learned = {};   // char -> [bitmaps], filled by the app from the phone's storage
+
+  function bmp(str) { return str.split('/'); }
+  function glyphDist(a, b) {                       // a,b: arrays of 7 row strings
+    const wa = a[0].length, wb = b[0].length;
+    const small = wa <= wb ? a : b, big = wa <= wb ? b : a, ws = small[0].length, wbg = big[0].length;
+    let best = 1e9;
+    for (let off = 0; off <= wbg - ws; off++) {
+      let d = 0;
+      for (let j = 0; j < 7; j++) for (let c = 0; c < wbg; c++) {
+        const sc = c - off; const sv = sc >= 0 && sc < ws ? small[j][sc] : '.';
+        if (sv !== big[j][c]) d++;
+      }
+      if (d < best) best = d;
+    }
+    return best;
+  }
+  function classify(gl) {
+    const cands = [];
+    const add = (ch, rows) => cands.push({ ch, d: glyphDist(gl.rows, rows) });
+    for (const ch in FONT) for (const t of FONT[ch]) add(ch, bmp(t));
+    for (const ch in learned) for (const t of learned[ch]) add(ch, t.split('/'));
+    cands.sort((a, b) => a.d - b.d);
+    const first = cands[0];
+    const second = cands.find(c => c.ch !== first.ch);
+    const ok = first.d <= 3 && (second.d - first.d) >= 2;
+    return { ch: first.d <= 6 ? first.ch : '?', d: first.d, alt: second.ch, altD: second.d, ok };
+  }
+
+  // Read one line at its expected height -> {text, chars:[{ch,ok,rows}], okAll}
+  function readLine(map, g, top) {
+    const { R, fit } = alignedLine(map, g, top);
+    const cut = cutGlyphs(R);
+    const chars = cut.glyphs.map(gl => { const c = classify(gl); return { ch: c.ch, ok: c.ok, d: c.d, alt: c.alt, rows: gl.rows.join('/') }; });
+    return { text: chars.map(c => c.ch).join(''), chars, okAll: chars.length > 0 && chars.every(c => c.ok), fit, R };
+  }
+
+  // split "-1021kW" into number part and unit; returns {num:string|null, unit, numChars}
+  function splitNumber(line) {
+    let k = 0; const ch = line.chars;
+    while (k < ch.length && /[0-9.\-]/.test(ch[k].ch)) k++;
+    const numText = ch.slice(0, k).map(c => c.ch).join('');
+    const unit = ch.slice(k).map(c => c.ch).join('');
+    const valid = /^-?\d+(\.\d+)?$/.test(numText);
+    return { numText, unit, valid, numChars: ch.slice(0, k) };
+  }
+  function setLearned(obj) { learned = obj || {}; }
+  function addLearned(ch, rows) { learned[ch] = learned[ch] || []; if (!learned[ch].includes(rows)) learned[ch].push(rows); return learned; }
+  function getLearned() { return learned; }
+
+
+
+  // ---- tilt estimation + straightening ----
+  // sharpness of the dot grid when the picture is rotated by a (degrees)
+  function gridSharpness(map, a) {
+    const w = map.w, h = map.h, rad = a * Math.PI / 180, c = Math.cos(rad), s = Math.sin(rad);
+    const xa = Math.round(w * 0.5), ya = Math.round(h * 0.15), yb = Math.round(h * 0.88);
+    const p0 = w / 140;
+    const nR = Math.ceil(h + w * Math.abs(s)) + 4, nC = Math.ceil(w + h * Math.abs(s)) + 4;
+    const rowP = new Float32Array(nR), colP = new Float32Array(nC);
+    const offR = w * Math.abs(s) * 0.5 + 2, offC = h * Math.abs(s) * 0.5 + 2;
+    const st = Math.max(1, Math.floor(p0 / 5));
+    for (let y = ya; y < yb; y += st) for (let x = xa; x < w; x += st) {
+      const v = map.ink[y * w + x]; if (v < 0.05) continue;
+      const yy = Math.round(y * c - x * s + offR), xx = Math.round(x * c + y * s + offC);
+      if (yy >= 0 && yy < nR) rowP[yy] += v;
+      if (xx >= 0 && xx < nC) colP[xx] += v;
+    }
+    const m1 = periodic(rowP, p0 * 0.85, p0 * 1.15, 40).mag, m2 = periodic(colP, p0 * 0.85, p0 * 1.15, 40).mag;
+    return m1 + m2;
+  }
+  function estimateTilt(img) {
+    const box = Core.findLcd(img); if (!box) return 0;
+    // shrink big inputs for speed: sample every k-th pixel of the ink map
+    const map = inkMap(img, box);
+    let best = { a: 0, v: -1 };
+    for (let a = -6; a <= 6.001; a += 0.5) { const v = gridSharpness(map, a); if (v > best.v) best = { a, v }; }
+    const c0 = best.a;
+    for (let a = c0 - 0.4; a <= c0 + 0.401; a += 0.1) { const v = gridSharpness(map, a); if (v > best.v) best = { a, v }; }
+    return best.a;
+  }
+  function deskew(img) {
+    const a = estimateTilt(img);
+    if (Math.abs(a) < 0.15) return { img, angle: 0 };
+    return { img: Core.rotateImage(img, a), angle: a };
+  }
+
+  // ---- full Schneider screen readers ----
+  const POWER_LINES = [{ key: 'kW', y: 0.2435, unit: 'kW' }, { key: 'kvar', y: 0.3505, unit: 'kvar' }, { key: 'kVA', y: 0.4535, unit: 'kVA' }, { key: 'pf', y: 0.664, unit: '' }];
+  const FORMAT = { kW: /^-?\d{1,5}$/, kvar: /^-?\d{1,5}$/, kVA: /^\d{1,5}$/, A: /^\d{1,3}$/, pf: /^-?[01]\.\d\d$/ };
+  const HOME_LINES = [{ key: 'A', y: 0.339, unit: 'A' }];
+
+  // img: RGBA image of the frame containing the LCD. kind: 'power' | 'home'
+  function readSchneider(img, kind) {
+    const ds = deskew(img); img = ds.img;
+    const box = Core.findLcd(img);
+    if (!box) return { error: 'Screen not found' };
+    const map = inkMap(img, box);
+    const g = fitGrid(map);
+    if (Math.abs(g.px - g.py) / g.py > 0.06) return { error: 'Screen is at too steep an angle', box, grid: g };
+    const S = sampleDots(map, g);
+    const resid = blankResidue(S, g, map);
+    const specs = kind === 'power' ? POWER_LINES : HOME_LINES;
+    const out = { box, img, grid: g, pitch: (g.px + g.py) / 2, tilt: ds.angle, fields: {} };
+    for (const sp of specs) {
+      const top = lineTop(sp.y, map, g, resid);
+      const L = readLine(map, g, top);
+      const sn = splitNumber(L);
+      const unitOk = sn.unit === sp.unit;
+      let value = sn.valid ? parseFloat(sn.numText) : null;
+      const fmt = FORMAT[sp.key];
+      const uncertain = !L.okAll || !unitOk || !sn.valid || (fmt && sn.valid && !fmt.test(sn.numText));
+      out.fields[sp.key] = { value, text: sn.numText, unit: sn.unit, unitOk, uncertain, line: L.text, chars: L.chars, numChars: sn.numChars };
+    }
+    return out;
+  }
+  const api = { inkMap, periodic, fitGrid, sampleDots, blankResidue, lineTop, extractLine, otsuVals, alignedLine, cutGlyphs, classify, readLine, splitNumber, setLearned, addLearned, getLearned, FONT, readSchneider, estimateTilt, deskew };
+  if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.DM = api;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+/* ComAp (colour TFT) field reader. Uses a caller-supplied OCR function. */
+(function (root) {
+  'use strict';
+  const Core = (typeof require !== 'undefined' && typeof module !== 'undefined') ? require('./core.js') : root.Core;
+
+  // positions are fractions of the detected screen (LCD) box
+  const FIELDS = {
+    gen: [{ key: 'A', y: 0.632, x0: 0.34, x1: 0.50, unit: '' }],
+    pow: [
+      { key: 'kW', y: 0.275, x0: 0.775, x1: 0.995 }, { key: 'pf', y: 0.445, x0: 0.775, x1: 0.995 },
+      { key: 'kvar', y: 0.612, x0: 0.775, x1: 0.995 }, { key: 'kVA', y: 0.782, x0: 0.775, x1: 0.995 }],
+  };
+
+  // Cut a band, binarise, trim to the text, scale to ~56 px text height, pad -> RGBA image (black on white)
+  function prepareBand(img, box, spec, opt) {
+    opt = opt || { preblur: 0, gain: 2.2 };
+    const W = box.x1 - box.x0, H = box.y1 - box.y0;
+    const bx0 = Math.max(0, Math.round(box.x0 + spec.x0 * W)), bx1 = Math.min(img.width, Math.round(box.x0 + spec.x1 * W));
+    const bh = Math.round(0.11 * H);
+    const by0 = Math.max(0, Math.round(box.y0 + spec.y * H - bh / 2)), by1 = Math.min(img.height, by0 + bh);
+    const bw = bx1 - bx0, hh = by1 - by0;
+    const gray = new Float32Array(bw * hh);
+    for (let y = 0; y < hh; y++) for (let x = 0; x < bw; x++) {
+      const j = ((y + by0) * img.width + (x + bx0)) * 4;
+      // text is dark blue; use the red channel (strongest contrast) blended with luminance
+      gray[y * bw + x] = 0.5 * img.data[j] + 0.5 * (0.299 * img.data[j] + 0.587 * img.data[j + 1] + 0.114 * img.data[j + 2]);
+    }
+    // local background removal: subtract a heavy blur so shading/glare does not matter
+    let gsm = { g: gray, width: bw, height: hh };
+    if (opt.preblur > 0) gsm = Core.boxBlur(gsm, Math.max(1, Math.round(hh * opt.preblur)));
+    const bl = Core.boxBlur({ g: gray, width: bw, height: hh }, Math.max(6, Math.round(hh * 0.45)));
+    const diff = new Float32Array(gray.length);
+    for (let i = 0; i < gray.length; i++) diff[i] = Math.max(0, Math.min(255, 128 + (gsm.g[i] - bl.g[i]) * opt.gain));
+    const thr = Core.otsu(diff);
+    const mask = new Uint8Array(gray.length);
+    for (let i = 0; i < mask.length; i++) mask[i] = diff[i] < thr ? 1 : 0;   // 1 = ink
+    // trim: rows/cols containing ink, ignoring very sparse noise
+    const rowInk = new Float32Array(hh), colInk = new Float32Array(bw);
+    for (let y = 0; y < hh; y++) for (let x = 0; x < bw; x++) if (mask[y * bw + x]) { rowInk[y]++; colInk[x]++; }
+    let ya = 0, yb = hh - 1; const rt = Math.max(2, bw * 0.015);
+    // keep the biggest vertical run of ink rows
+    let bestRun = [0, -1], s = -1;
+    for (let y = 0; y <= hh; y++) { const on = y < hh && rowInk[y] >= rt; if (on && s < 0) s = y; if (!on && s >= 0) { if (y - 1 - s > bestRun[1] - bestRun[0]) bestRun = [s, y - 1]; s = -1; } }
+    if (bestRun[1] < bestRun[0]) return null;
+    ya = bestRun[0]; yb = bestRun[1];
+    let xa = bw, xb = -1;
+    for (let x = 0; x < bw; x++) { let n = 0; for (let y = ya; y <= yb; y++) n += mask[y * bw + x]; if (n >= 2) { if (x < xa) xa = x; if (x > xb) xb = x; } }
+    if (xb < xa) return null;
+    const th = yb - ya + 1, tw = xb - xa + 1;
+    const sc = 56 / th, pad = 24;
+    const ow = Math.max(8, Math.round(tw * sc)) + pad * 2, oh = Math.round(th * sc) + pad * 2;
+    const out = new Uint8ClampedArray(ow * oh * 4).fill(255);
+    for (let y = 0; y < oh - 2 * pad; y++) for (let x = 0; x < ow - 2 * pad; x++) {
+      // area-ish sample: average a small neighbourhood of the mask
+      const sx = xa + x / sc, sy = ya + y / sc;
+      let v = 0, n = 0;
+      for (let dy = 0; dy < Math.max(1, Math.ceil(1 / sc)); dy++) for (let dx = 0; dx < Math.max(1, Math.ceil(1 / sc)); dx++) {
+        const px = Math.min(bw - 1, Math.floor(sx) + dx), py = Math.min(hh - 1, Math.floor(sy) + dy); v += mask[py * bw + px]; n++;
+      }
+      const g = 255 - Math.round(255 * (v / n));
+      const o = ((y + pad) * ow + (x + pad)) * 4; out[o] = out[o + 1] = out[o + 2] = g; out[o + 3] = 255;
+    }
+    return { data: out, width: ow, height: oh };
+  }
+
+  function parseNum(text) {
+    const t = String(text || '').replace(/\s+/g, '');
+    const m = t.match(/-?\d+(\.\d+)?/);
+    return m ? m[0] : null;
+  }
+  // the power factor always has the form 0.xx / 1.00: restore a decimal point the OCR dropped
+  function fixPf(key, t) {
+    if (key === 'pf' && t !== null && /^-?[01]\d\d$/.test(t)) return t.replace(/^(-?[01])(\d\d)$/, '$1.$2');
+    return t;
+  }
+  const FORMAT = { kW: /^-?\d{1,5}$/, kvar: /^-?\d{1,5}$/, kVA: /^\d{1,5}$/, A: /^\d{1,3}$/, pf: /^-?[01]\.\d\d$/ };
+
+  // tilt of the text rows (degrees), by maximising the sharpness of the row profile
+  function estimateTilt(img) {
+    const box = Core.findLcd(img); if (!box) return 0;
+    const W = box.x1 - box.x0, H = box.y1 - box.y0;
+    const step = Math.max(1, Math.round(W / 480));
+    const xa = box.x0 + Math.round(W * 0.45), ya = box.y0 + Math.round(H * 0.14), yb = box.y0 + Math.round(H * 0.88), xb = box.x1 - Math.round(W * 0.02);
+    const pts = [];
+    const vals = [];
+    for (let y = ya; y < yb; y += step) for (let x = xa; x < xb; x += step) { const j = (y * img.width + x) * 4; vals.push(0.5 * img.data[j] + 0.5 * (0.299 * img.data[j] + 0.587 * img.data[j + 1] + 0.114 * img.data[j + 2])); pts.push(x, y); }
+    const thr = Core.otsu(vals) - 10;
+    const ink = []; for (let k = 0; k < vals.length; k++) if (vals[k] < thr) ink.push(pts[2 * k] - xa, pts[2 * k + 1] - ya);
+    if (ink.length < 200) return 0;
+    const score = (a) => {
+      const rad = a * Math.PI / 180, c = Math.cos(rad), s = Math.sin(rad);
+      const n = Math.ceil((yb - ya) + (xb - xa) * Math.abs(s)) + 4, off = (xb - xa) * Math.abs(s) * 0.5 + 2;
+      const prof = new Float32Array(n);
+      for (let k = 0; k < ink.length; k += 2) { const yy = Math.round((ink[k + 1] * c - ink[k] * s + off) / step); if (yy >= 0 && yy < n) prof[yy]++; }
+      let sc = 0; for (let i = 1; i < n; i++) { const d = prof[i] - prof[i - 1]; sc += d * d; }
+      return sc;
+    };
+    let best = { a: 0, v: -1 };
+    for (let a = -6; a <= 6.001; a += 0.5) { const v = score(a); if (v > best.v) best = { a, v }; }
+    const c0 = best.a;
+    for (let a = c0 - 0.4; a <= c0 + 0.401; a += 0.1) { const v = score(a); if (v > best.v) best = { a, v }; }
+    return best.a;
+  }
+
+  const SETTINGS = [{ preblur: 0.03, gain: 2.2 }, { preblur: 0.02, gain: 1.8 }];
+
+  async function readComap(img, kind, ocr) {
+    let tilt = 0;
+    try { tilt = estimateTilt(img); } catch (e) { tilt = 0; }
+    if (Math.abs(tilt) >= 0.2) img = Core.rotateImage(img, tilt); else tilt = 0;
+    const box = Core.findLcd(img);
+    if (!box) return { error: 'Screen not found' };
+    const out = { box, tilt, img, fields: {} };
+    for (const spec of FIELDS[kind]) {
+      const reads = [];
+      let bandShown = null;
+      for (const st of SETTINGS) {
+        const band = prepareBand(img, box, spec, st);
+        if (!band) { reads.push(null); continue; }
+        if (!bandShown) bandShown = band;
+        reads.push(fixPf(spec.key, parseNum(await ocr(band))));
+      }
+      const first = reads[0];
+      const fmtOk = first !== null && FORMAT[spec.key].test(first);
+      const agree = reads.length > 1 && reads[0] === reads[1];
+      out.fields[spec.key] = { value: first === null ? null : parseFloat(first), text: first || '', raw: reads.join(' | '), uncertain: !(fmtOk && agree), alt: reads[1], band: bandShown };
+    }
+    return out;
+  }
+  const api = { FIELDS, prepareBand, parseNum, readComap, estimateTilt };
+  if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.ComAp = api;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+(function () {
+'use strict';
+const VERSION = '1.0';
+const TESS = {
+  script: 'https://cdn.jsdelivr.net/npm/tesseract.js@7.0.0/dist/tesseract.min.js',
+  worker: 'https://cdn.jsdelivr.net/npm/tesseract.js@7.0.0/dist/worker.min.js',
+  core: 'https://cdn.jsdelivr.net/npm/tesseract.js-core@7.0.0',
+  lang: 'https://cdn.jsdelivr.net/npm/@tesseract.js-data/eng@1.0.0/4.0.0_best_int'
+};
+const MAX_DIM = 1800;                    // photos are shrunk to this before reading
+
+// ------------------------------------------------------------ helpers
+const $ = (s, r) => (r || document).querySelector(s);
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } }
+};
+const KEY_SET = 'pr_settings_v1', KEY_ROUNDS = 'pr_rounds_v1', KEY_LEARN = 'pr_learned_v1';
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+function toast(msg, ms) { const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast._t); toast._t = setTimeout(() => { t.hidden = true; }, ms || 2600); }
+function busy(msg) { if (msg) { $('#busyMsg').textContent = msg; $('#busy').hidden = false; } else $('#busy').hidden = true; }
+const pad = (n) => String(n).padStart(2, '0');
+function nearestHourLocal() {
+  const d = new Date(); d.setMinutes(d.getMinutes() + 30); d.setMinutes(0, 0, 0);
+  return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + 'T' + pad(d.getHours()) + ':00';
+}
+
+// ------------------------------------------------------------ settings & data
+const DEFAULT_PANELS = [
+  ['G6', 'C'], ['G4', 'C'], ['G1', 'C'], ['G5', 'C'], ['G3', 'C'], ['G2', 'C'],
+  ['EKO ACADEMY', 'S'], ['INCOMER', 'S'], ['WATER TREATMENT PLANT', 'S'], ['EMBASSY', 'S'], ['ITB BATCH PLANT', 'S'], ['BUS SECTION', 'S'],
+  ['SSIII OUTGOING', 'S'], ['INTER-CONNECT', 'S'], ['SSII OUTGOING', 'S'], ['ORCA MALL', 'S'], ['FEEDER LOOP', 'S']
+];
+const DEFAULT_SHEET = ['ORCA MALL', 'FEEDER LOOP', 'INTER-CONNECT', 'WATER TREATMENT PLANT', 'EKO ACADEMY', 'SSII OUTGOING', 'SSIII OUTGOING', 'INCOMER',
+  'EMBASSY', 'ITB BATCH PLANT', 'BUS SECTION', 'G1', 'G2', 'G3', 'G4', 'G5', 'G6'];
+function defaults() {
+  return { kv: 33, auto: true, pfRule: 'kvar', panels: DEFAULT_PANELS.map(p => ({ name: p[0], brand: p[1] })), sheet: DEFAULT_SHEET.slice() };
+}
+let S = Object.assign(defaults(), store.get(KEY_SET, {}));
+let rounds = store.get(KEY_ROUNDS, []);
+let cur = null;
+let view = 'home';
+let draft = null;
+DM.setLearned(store.get(KEY_LEARN, {}));
+
+function saveAll() { store.set(KEY_SET, S); store.set(KEY_ROUNDS, rounds.slice(0, 200)); }
+function newRound() {
+  const r = { id: Date.now(), time: nearestHourLocal(), rows: {} };
+  rounds.unshift(r); cur = r; saveAll(); return r;
+}
+(function initRound() {
+  if (rounds.length) {
+    cur = rounds[0];
+    const age = Date.now() - cur.id;
+    if (age > 3 * 3600 * 1000) newRound();
+  } else newRound();
+})();
+const rowOf = (name) => cur.rows[name];
+function nextPending() { return S.panels.findIndex(p => !cur.rows[p.name]); }
+function counts() {
+  let done = 0, skip = 0;
+  S.panels.forEach(p => { const r = cur.rows[p.name]; if (r) { if (r.status === 'done') done++; else skip++; } });
+  return { done, skip, total: S.panels.length };
+}
+
+// ------------------------------------------------------------ views
+function render() {
+  if (view === 'home') renderHome();
+  else if (view === 'review') renderReview();
+  else if (view === 'settings') renderSettings();
+  else if (view === 'history') renderHistory();
+  window.scrollTo(0, 0);
+}
+function setApp(html) { $('#app').innerHTML = html; }
+function fmt(v) { return v === null || v === undefined || v === '' ? '–' : v; }
+
+function renderHome() {
+  const c = counts(), ni = nextPending();
+  const pct = Math.round(((c.done + c.skip) / Math.max(1, c.total)) * 100);
+  const when = cur.time.replace('T', '  ');
+  let nextCard;
+  if (ni >= 0) {
+    const p = S.panels[ni];
+    nextCard = `<div class="card next"><div class="row"><span class="muted">NEXT PANEL</span><span class="sp"></span><span class="chip ${p.brand}">${p.brand === 'C' ? 'ComAp' : 'Schneider'}</span></div>
+      <div class="name">${esc(p.name)}</div>
+      <div class="muted small" style="margin-bottom:12px">Two photos: the current screen, then the power screen.</div>
+      <div class="row"><button class="primary sp" data-act="read" data-i="${ni}">📷 Take reading</button><button data-act="skip" data-i="${ni}">Not in use</button></div></div>`;
+  } else {
+    nextCard = `<div class="card"><div class="banner ok" style="margin:0 0 10px">✔ Round complete. Export it now so the readings are saved outside the phone.</div>
+      <div class="row"><button class="primary sp" data-act="csv">Download CSV</button>${navigator.share ? '<button data-act="share">Share</button>' : ''}</div></div>`;
+  }
+  const list = S.panels.map((p, i) => {
+    const r = cur.rows[p.name];
+    let st = '<span class="st pend">to do</span>', vals = '';
+    if (r && r.status === 'done') { st = '<span class="st done">✔ done</span>'; vals = `${fmt(r.kW)} kW · ${fmt(r.kVAR)} kVAR · PF ${fmt(r.PF)} · ${fmt(r.A)} A`; }
+    else if (r) st = '<span class="st skip">not in use</span>';
+    return `<li data-act="open" data-i="${i}" style="cursor:pointer"><span class="chip ${p.brand}">${p.brand}</span><div class="n">${esc(p.name)}<div class="vals">${vals}</div></div>${st}</li>`;
+  }).join('');
+  setApp(`<header class="top"><h1>Panel Readings</h1><button data-act="history">History</button><button data-act="settings">⚙</button></header>
+  <main>
+    <div class="card"><div class="row"><div><div class="muted small">Reading round</div><div style="font-weight:700;font-size:18px">${esc(when)}</div></div><span class="sp"></span><button class="ghost" data-act="roundtime">Change</button></div>
+      <div class="prog"><i style="width:${pct}%"></i></div><div class="muted small">${c.done} read · ${c.skip} not in use · ${c.total - c.done - c.skip} to do</div></div>
+    ${nextCard}
+    <div class="card"><h2>All panels</h2><ul class="panels">${list}</ul></div>
+    <div class="muted small" style="text-align:center;padding:6px 10px 16px">Saved on this phone only. Export at the end of every round.</div>
+  </main>
+  <div class="bar"><button data-act="csv">Download CSV</button><button data-act="copyrow">Copy row for Excel</button><button data-act="newround">New round</button></div>`);
+}
+
+// ------------------------------------------------------------ export
+function csvEsc(v) { v = v == null ? '' : String(v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }
+function roundCsv(r) {
+  const head = ['Date', 'Time', 'Panel', 'Status', 'KV', 'A', 'PF', 'KW', 'KVA', 'KVAR', 'Source', 'Notes'];
+  const [d, t] = r.time.split('T');
+  const lines = [head.join(',')];
+  S.panels.forEach(p => {
+    const x = r.rows[p.name];
+    const st = !x ? 'NOT READ' : x.status === 'done' ? 'OK' : 'NOT IN USE';
+    const v = (k) => (x && x.status === 'done' && x[k] !== null && x[k] !== undefined ? x[k] : '');
+    lines.push([d, t, p.name, st, v('kV'), v('A'), v('PF'), v('kW'), v('kVA'), v('kVAR'), x && x.source || '', x && x.note || ''].map(csvEsc).join(','));
+  });
+  return lines.join('\r\n') + '\r\n';
+}
+function rowForExcel(r) {
+  const out = [r.time.replace('T', ' ')];
+  S.sheet.forEach(name => {
+    const x = r.rows[name];
+    if (x && x.status === 'done') out.push(x.kV, fmt2(x.A), fmt2(x.PF), fmt2(x.kW), fmt2(x.kVA), fmt2(x.kVAR));
+    else out.push('', '', '', '', '', '');
+  });
+  return out.join('\t');
+}
+function fmt2(v) { return v === null || v === undefined ? '' : v; }
+function download(name, text) {
+  const blob = new Blob(['﻿' + text], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+}
+const csvName = (r) => 'readings_' + r.time.replace(/[:T]/g, '-').replace(/-00$/, '') + '.csv';
+async function shareCsv(r) {
+  const file = new File(['﻿' + roundCsv(r)], csvName(r), { type: 'text/csv' });
+  try {
+    if (navigator.canShare && navigator.canShare({ files: [file] })) await navigator.share({ files: [file], title: 'Panel readings ' + r.time });
+    else download(csvName(r), roundCsv(r));
+  } catch (e) { /* cancelled */ }
+}
+async function copyText(t) {
+  try { await navigator.clipboard.writeText(t); return true; } catch (e) {
+    const ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select();
+    let ok = false; try { ok = document.execCommand('copy'); } catch (e2) {} ta.remove(); return ok;
+  }
+}
+
+// ------------------------------------------------------------ OCR (ComAp only)
+let ocrPromise = null;
+function loadScript(src) { return new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => rej(new Error('Could not load ' + src)); document.head.appendChild(s); }); }
+function ensureOcr() {
+  if (ocrPromise) return ocrPromise;
+  ocrPromise = (async () => {
+    if (!window.Tesseract) await loadScript(TESS.script);
+    const w = await Tesseract.createWorker('eng', 1, { workerPath: TESS.worker, corePath: TESS.core, langPath: TESS.lang, gzip: true });
+    await w.setParameters({ tessedit_char_whitelist: '0123456789.-', tessedit_pageseg_mode: '7' });
+    return w;
+  })();
+  ocrPromise.catch(() => { ocrPromise = null; });
+  return ocrPromise;
+}
+async function ocrBand(band) {
+  const w = await ensureOcr();
+  const cv = document.createElement('canvas'); cv.width = band.width; cv.height = band.height;
+  cv.getContext('2d').putImageData(new ImageData(band.data, band.width, band.height), 0, 0);
+  const { data } = await w.recognize(cv);
+  return data.text;
+}
+
+// ------------------------------------------------------------ images
+function imgToCanvas(img, maxw) {   // RGBA {data,width,height} -> canvas scaled to maxw
+  const src = document.createElement('canvas'); src.width = img.width; src.height = img.height;
+  src.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(img.data), img.width, img.height), 0, 0);
+  if (!maxw || img.width <= maxw) return src;
+  const out = document.createElement('canvas'); out.width = maxw; out.height = Math.round(img.height * maxw / img.width);
+  out.getContext('2d').drawImage(src, 0, 0, out.width, out.height); return out;
+}
+function thumbOf(img, box) {
+  const src = imgToCanvas(img);
+  const w = box.x1 - box.x0, h = box.y1 - box.y0, out = document.createElement('canvas');
+  out.width = 520; out.height = Math.round(520 * h / w);
+  out.getContext('2d').drawImage(src, box.x0, box.y0, w, h, 0, 0, out.width, out.height);
+  return out.toDataURL('image/jpeg', 0.8);
+}
+function glyphUrl(chars) {          // draw dot-matrix glyphs the way the app read them
+  const d = 4, gap = 1; let cols = 0;
+  chars.forEach(c => { cols += c.rows.split('/')[0].length + 1; });
+  const cv = document.createElement('canvas'); cv.width = cols * d + 8; cv.height = 7 * d + 8;
+  const x = cv.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, cv.width, cv.height); let ox = 4;
+  chars.forEach(c => {
+    const rows = c.rows.split('/'); x.fillStyle = c.ok ? '#2a2a7a' : '#c0392b';
+    rows.forEach((r, j) => { for (let i = 0; i < r.length; i++) if (r[i] === '#') x.fillRect(ox + i * d, 4 + j * d, d - gap, d - gap); });
+    ox += (rows[0].length + 1) * d;
+  });
+  return cv.toDataURL();
+}
+function bandUrl(band) { const cv = imgToCanvas(band); return cv.toDataURL(); }
+async function fileToImage(file) {
+  let bmp;
+  try { bmp = await createImageBitmap(file, { imageOrientation: 'from-image' }); }
+  catch (e) { bmp = await new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = URL.createObjectURL(file); }); }
+  const w = bmp.width || bmp.naturalWidth, h = bmp.height || bmp.naturalHeight, sc = Math.min(1, MAX_DIM / Math.max(w, h));
+  const cv = document.createElement('canvas'); cv.width = Math.round(w * sc); cv.height = Math.round(h * sc);
+  cv.getContext('2d').drawImage(bmp, 0, 0, cv.width, cv.height);
+  return cv.getContext('2d').getImageData(0, 0, cv.width, cv.height);
+}
+
+// ------------------------------------------------------------ capture flow
+const STEPS = {
+  S: [{ kind: 'cur', title: 'Current', hint: 'Main screen with the name and amps' }, { kind: 'pow', title: 'Power', hint: 'The POWER screen: kW, kvar, kVA, P.F.' }],
+  C: [{ kind: 'cur', title: 'Current', hint: 'Generator screen (volts / amps / frequency)' }, { kind: 'pow', title: 'Power', hint: 'Power screen (kW, P.F., kVAr, kVA)' }]
+};
+const FIELD_ORDER = ['A', 'PF', 'kW', 'kVA', 'kVAR'];
+const FIELD_LABEL = { A: 'A', PF: 'P.F.', kW: 'kW', kVA: 'kVA', kVAR: 'kVAR' };
+
+function startReading(i) {
+  const p = S.panels[i];
+  draft = { i, panel: p, step: 0, fields: {}, thumbs: {}, manual: false };
+  openCamera();
+}
+function emptyField() { return { text: '', uncertain: false, src: 'none', edited: false }; }
+
+const cam = { on: false, stream: null, timer: null, ready: 0, prev: null, prevBox: null, hist: [], busy: false, auto: true };
+const camEl = { vid: null, ov: null };
+
+async function openCamera() {
+  cam.auto = S.auto; cam.ready = 0; cam.prev = null; cam.prevBox = null; cam.hist = []; cam.busy = false; cam.waitChange = false; cam.capThumb = null;
+  const st = STEPS[draft.panel.brand][draft.step];
+  $('#camT1').textContent = draft.panel.name + ' — step ' + (draft.step + 1) + ' of 2: ' + st.title.toUpperCase();
+  $('#camT2').textContent = st.hint;
+  $('#camAuto').textContent = 'Auto: ' + (cam.auto ? 'on' : 'off');
+  setStatus('red', 'Starting camera…');
+  $('#cam').hidden = false;
+  camEl.vid = $('#vid'); camEl.ov = $('#ov');
+  try {
+    cam.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 2560 }, height: { ideal: 1440 } }, audio: false });
+    camEl.vid.srcObject = cam.stream; await camEl.vid.play();
+    try { const tr = cam.stream.getVideoTracks()[0], caps = tr.getCapabilities ? tr.getCapabilities() : {}; if (caps.focusMode && caps.focusMode.includes('continuous')) await tr.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }); } catch (e) {}
+    cam.on = true; tick();
+  } catch (e) {
+    cam.on = false;
+    console.warn('camera', e && e.name, e && e.message);
+    setStatus('yellow', 'Camera not available (' + ((e && e.name) || 'error') + '). Tap “From photo” to take or pick a photo.');
+  }
+}
+function closeCamera() {
+  cam.on = false; clearTimeout(cam.timer);
+  if (cam.stream) { cam.stream.getTracks().forEach(t => t.stop()); cam.stream = null; }
+  if (camEl.vid) camEl.vid.srcObject = null;
+  $('#cam').hidden = true;
+}
+function setStatus(cls, msg) { const s = $('#camStatus'); s.className = 'cam-status ' + cls; s.textContent = msg; }
+
+const GUIDE_ASPECT = { S: 1.86, C: 1.67 };
+function judge(m) {
+  if (!m.found) return { c: 'red', msg: 'Point at the screen — fill the box with it' };
+  if (m.touchesEdge) return { c: 'red', msg: 'Move back a little — the whole screen must fit' };
+  if (m.sameScene) return { c: 'yellow', msg: 'Now switch the panel to the POWER screen' };
+  if (m.nativeW < 560) return { c: 'red', msg: 'Move closer' };
+  if (m.glare > 0.35) return { c: 'red', msg: 'Glare on the screen — tilt the phone slightly' };
+  if (m.wrongBrand) return { c: 'yellow', msg: 'This looks like the ' + m.wrongBrand + ' screen — check the panel' };
+  if (!m.sharp) return { c: 'yellow', msg: 'Not sharp — hold still, let it focus' };
+  if (!m.steady) return { c: 'yellow', msg: 'Hold steady…' };
+  return { c: 'green', msg: cam.auto ? 'Good — capturing…' : 'Good — tap the button' };
+}
+const smallCv = document.createElement('canvas'), cropCv = document.createElement('canvas'), thumbCv = document.createElement('canvas');
+function analyze() {
+  const v = camEl.vid, vw = v.videoWidth, vh = v.videoHeight; if (!vw) return;
+  const AW = 480, sc = AW / vw; smallCv.width = AW; smallCv.height = Math.round(vh * sc);
+  const sx = smallCv.getContext('2d', { willReadFrequently: true }); sx.drawImage(v, 0, 0, smallCv.width, smallCv.height);
+  const img = sx.getImageData(0, 0, smallCv.width, smallCv.height);
+  const box = Core.findLcd(img);
+  const m = { found: !!box, touchesEdge: false, nativeW: 0, glare: 0, sharp: false, steady: false, wrongBrand: null };
+  let drawBox = null;
+  if (box) {
+    drawBox = { x: box.x0 / smallCv.width, y: box.y0 / smallCv.height, w: (box.x1 - box.x0) / smallCv.width, h: (box.y1 - box.y0) / smallCv.height };
+    m.touchesEdge = box.x0 <= 2 || box.y0 <= 2 || box.x1 >= smallCv.width - 2 || box.y1 >= smallCv.height - 2;
+    const bx = box.x0 / sc, by = box.y0 / sc, bw = (box.x1 - box.x0) / sc, bh = (box.y1 - box.y0) / sc;
+    m.nativeW = bw;
+    cropCv.width = 640; cropCv.height = Math.max(16, Math.round(640 * bh / bw));
+    const cx = cropCv.getContext('2d', { willReadFrequently: true }); cx.drawImage(v, bx, by, bw, bh, 0, 0, cropCv.width, cropCv.height);
+    const ci = cx.getImageData(0, 0, cropCv.width, cropCv.height);
+    const sh = Core.sharpness(ci); m.glare = sh.glare;
+    cam.hist.push(sh.metric); if (cam.hist.length > 12) cam.hist.shift();
+    const ref = Math.max.apply(null, cam.hist);
+    m.sharp = sh.metric >= 0.55 && sh.metric >= 0.82 * ref;
+    // steadiness: tiny grey thumbnail difference + box movement
+    thumbCv.width = 96; thumbCv.height = Math.round(96 * bh / bw);
+    const tx = thumbCv.getContext('2d', { willReadFrequently: true }); tx.drawImage(cropCv, 0, 0, thumbCv.width, thumbCv.height);
+    const td = tx.getImageData(0, 0, thumbCv.width, thumbCv.height).data, g = new Float32Array(td.length / 4);
+    for (let i = 0; i < g.length; i++) g[i] = 0.299 * td[i * 4] + 0.587 * td[i * 4 + 1] + 0.114 * td[i * 4 + 2];
+    let diff = 99;
+    if (cam.prev && cam.prev.length === g.length) { diff = 0; for (let i = 0; i < g.length; i++) diff += Math.abs(g[i] - cam.prev[i]); diff /= g.length; }
+    let shift = 1;
+    if (cam.prevBox) shift = Math.hypot((drawBox.x + drawBox.w / 2) - (cam.prevBox.x + cam.prevBox.w / 2), (drawBox.y + drawBox.h / 2) - (cam.prevBox.y + cam.prevBox.h / 2)) + Math.abs(drawBox.w - cam.prevBox.w);
+    m.steady = diff < 24 && shift < 0.06;
+    cam.prev = g; cam.prevBox = drawBox;
+    if (cam.waitChange) {
+      let d2 = 99;
+      if (cam.capThumb && cam.capThumb.length === g.length) { d2 = 0; for (let i = 0; i < g.length; i++) d2 += Math.abs(g[i] - cam.capThumb[i]); d2 /= g.length; }
+      if (d2 < 9) m.sameScene = true; else cam.waitChange = false;
+    }
+    const asp = bw / bh, exp = GUIDE_ASPECT[draft.panel.brand], other = draft.panel.brand === 'S' ? 'ComAp' : 'Schneider', oa = GUIDE_ASPECT[draft.panel.brand === 'S' ? 'C' : 'S'];
+    if (Math.abs(asp - exp) / exp > 0.07 && Math.abs(asp - oa) < Math.abs(asp - exp)) m.wrongBrand = other;
+  } else { cam.prev = null; cam.prevBox = null; cam.hist = []; }
+  const j = judge(m);
+  setStatus(j.c, j.msg);
+  drawOverlay(drawBox, j.c);
+  if (j.c === 'green') { cam.ready++; if (cam.auto && cam.ready >= 3) captureFrame(); } else if (j.c === 'yellow') cam.ready = Math.max(0, cam.ready - 1); else cam.ready = 0;
+}
+function drawOverlay(box, color) {
+  const ov = camEl.ov, W = ov.clientWidth, H = ov.clientHeight, dpr = window.devicePixelRatio || 1;
+  if (ov.width !== W * dpr) { ov.width = W * dpr; ov.height = H * dpr; }
+  const x = ov.getContext('2d'); x.setTransform(dpr, 0, 0, dpr, 0, 0); x.clearRect(0, 0, W, H);
+  const v = camEl.vid, vw = v.videoWidth || 1, vh = v.videoHeight || 1, s = Math.min(W / vw, H / vh), ox = (W - vw * s) / 2, oy = (H - vh * s) / 2;
+  // target guide
+  const asp = GUIDE_ASPECT[draft.panel.brand], gw = Math.min(W * 0.84, (H * 0.5) * asp), gh = gw / asp;
+  x.setLineDash([10, 8]); x.lineWidth = 2; x.strokeStyle = '#ffffffaa'; x.strokeRect((W - gw) / 2, (H - gh) / 2 - 20, gw, gh); x.setLineDash([]);
+  if (box) {
+    const col = color === 'green' ? '#35e08f' : color === 'yellow' ? '#ffcc3d' : '#ff6b60';
+    x.lineWidth = 5; x.strokeStyle = col; x.strokeRect(ox + box.x * vw * s, oy + box.y * vh * s, box.w * vw * s, box.h * vh * s);
+  }
+}
+function tick() { if (!cam.on) return; try { analyze(); } catch (e) { console.error(e); } cam.timer = setTimeout(tick, 250); }
+
+function grabFrame() {
+  const v = camEl.vid, vw = v.videoWidth, vh = v.videoHeight, sc = Math.min(1, MAX_DIM / Math.max(vw, vh));
+  const cv = document.createElement('canvas'); cv.width = Math.round(vw * sc); cv.height = Math.round(vh * sc);
+  const x = cv.getContext('2d'); x.drawImage(v, 0, 0, cv.width, cv.height);
+  return x.getImageData(0, 0, cv.width, cv.height);
+}
+// A hand shakes: grab a few frames a moment apart and keep the sharpest one.
+async function grabBest() {
+  let best = null, bestM = -1;
+  for (let i = 0; i < 5; i++) {
+    const im = grabFrame(); let m = 0;
+    try { const box = Core.findLcd(im); if (box) { const bw = box.x1 - box.x0, bh = box.y1 - box.y0, c = document.createElement('canvas'); c.width = Math.min(640, Math.round(bw)); c.height = Math.max(16, Math.round(c.width * bh / bw)); const cx = c.getContext('2d', { willReadFrequently: true }); const t = document.createElement('canvas'); t.width = im.width; t.height = im.height; t.getContext('2d').putImageData(im, 0, 0); cx.drawImage(t, box.x0, box.y0, bw, bh, 0, 0, c.width, c.height); m = Core.sharpness(cx.getImageData(0, 0, c.width, c.height)).metric; } } catch (e) {}
+    if (m > bestM) { bestM = m; best = im; }
+    if (i < 4) await sleep(90);
+  }
+  return best;
+}
+async function captureFrame() {
+  if (cam.busy || !cam.on) return;
+  cam.busy = true; cam.on = false; clearTimeout(cam.timer);
+  let img; try { img = await grabBest(); } catch (e) { cam.busy = false; cam.on = true; tick(); return; }
+  await handleImage(img);
+}
+async function handleImage(img) {
+  cam.busy = true;
+  busy(draft.panel.brand === 'C' ? 'Reading the screen… (first time loads the reader)' : 'Reading the screen…');
+  await sleep(40);
+  let err = null;
+  try { err = await processImage(img); } catch (e) { console.error(e); err = e.message || 'Could not read'; }
+  busy(false);
+  cam.busy = false;
+  if (err) { toast(err, 3500); if (cam.stream) { cam.on = true; cam.ready = 0; tick(); } return; }
+  const last = draft.step >= 1;
+  if (!last) { draft.step = 1; toast('Current read. Now the POWER screen.'); if (cam.stream) { const st = STEPS[draft.panel.brand][1]; $('#camT1').textContent = draft.panel.name + ' — step 2 of 2: ' + st.title.toUpperCase(); $('#camT2').textContent = st.hint; cam.capThumb = cam.prev; cam.ready = 0; cam.prev = null; cam.hist = []; cam.waitChange = true; cam.on = true; tick(); } else { setStatus('yellow', 'Now take / pick a photo of the POWER screen.'); } }
+  else { closeCamera(); view = 'review'; render(); }
+}
+async function processImage(img) {
+  const brand = draft.panel.brand, kind = STEPS[brand][draft.step].kind;
+  let r;
+  if (brand === 'S') r = DM.readSchneider(img, kind === 'cur' ? 'home' : 'power');
+  else r = await ComAp.readComap(img, kind === 'cur' ? 'gen' : 'pow', ocrBand);
+  if (r.error) return r.error + ' — try again';
+  if (brand === 'S') {
+    const keys = kind === 'cur' ? ['A'] : ['kW', 'kvar', 'kVA'];
+    const bad = keys.filter(k => !(r.fields[k] && r.fields[k].unitOk)).length;
+    if (bad >= (kind === 'cur' ? 1 : 2)) return kind === 'cur' ? 'That does not look like the HOME screen with the current (A) line — try again' : 'That does not look like the POWER screen (kW / kvar / kVA) — open it and try again';
+  }
+  const map = kind === 'cur' ? { A: 'A' } : { kW: 'kW', kvar: 'kVAR', kVA: 'kVA', pf: 'PF' };
+  for (const k in map) {
+    const f = r.fields[k];
+    draft.fields[map[k]] = {
+      text: f.text ? String(f.text) : (f.value === null || f.value === undefined ? '' : String(f.value)), uncertain: !!f.uncertain, src: 'cam', edited: false,
+      glyphs: f.numChars || null, seen: f.numChars ? glyphUrl(f.numChars.concat(f.unit ? [] : [])) : (f.band ? bandUrl(f.band) : null)
+    };
+  }
+  draft.thumbs[kind] = thumbOf(r.img, r.box);
+  if (kind === 'pow') applyPfRule();
+  return null;
+}
+function applyPfRule() {
+  if (draft.panel.brand !== 'C') return;
+  const pf = draft.fields.PF, kv = draft.fields.kVAR; if (!pf || pf.edited || !pf.text) return;
+  const mag = Math.abs(parseFloat(pf.text)); if (!isFinite(mag)) return;
+  const q = parseFloat(kv && kv.text);
+  pf.text = (S.pfRule === 'kvar' && isFinite(q) && q < 0 ? '-' : '') + mag.toFixed(2);
+}
+
+// camera controls
+$('#camCancel').onclick = () => { closeCamera(); draft = null; view = 'home'; render(); };
+$('#camShot').onclick = () => { if (cam.stream) captureFrame(); else toast('No camera — use “From photo”'); };
+$('#camAuto').onclick = () => { cam.auto = !cam.auto; S.auto = cam.auto; saveAll(); $('#camAuto').textContent = 'Auto: ' + (cam.auto ? 'on' : 'off'); cam.ready = 0; };
+$('#camSkip').onclick = () => { const p = draft.panel; closeCamera(); markSkipped(p); };
+$('#fileIn').onchange = async (e) => {
+  const f = e.target.files && e.target.files[0]; e.target.value = ''; if (!f) return;
+  if (cam.stream) { cam.on = false; clearTimeout(cam.timer); }
+  try { await handleImage(await fileToImage(f)); } catch (err) { busy(false); toast('Could not open that photo'); if (cam.stream) { cam.on = true; tick(); } }
+};
+document.addEventListener('visibilitychange', () => { if (document.hidden && cam.stream) { closeCamera(); draft = null; view = 'home'; render(); } });
+
+function markSkipped(p) {
+  cur.rows[p.name] = { status: 'skipped', t: new Date().toISOString() }; saveAll(); draft = null; view = 'home'; render(); toast(p.name + ' marked not in use');
+}
+
+// ------------------------------------------------------------ review
+function parseNum(t) { t = String(t == null ? '' : t).trim(); if (t === '') return null; const v = Number(t); return isFinite(v) ? v : NaN; }
+function currentValues() {
+  const v = {};
+  for (const k of FIELD_ORDER) { const f = draft.fields[k]; v[k] = f ? parseNum(f.text) : null; }
+  return v;
+}
+function evaluate() {
+  const v = currentValues(), vv = {};
+  for (const k in v) vv[k] = Number.isNaN(v[k]) ? null : v[k];
+  return Core.checkAll(vv, S.kv);
+}
+function fieldState(k, ev) {
+  const f = draft.fields[k] || emptyField(), n = parseNum(f.text);
+  if (f.text.trim() === '') return { cls: 'unsure', tag: 'type it' };
+  if (Number.isNaN(n)) return { cls: 'bad', tag: 'not a number' };
+  const is = ev.issues[k];
+  if (is) return { cls: is.level === 'check' ? 'bad' : 'maybe', tag: is.level === 'check' ? 'check this' : 'maybe wrong' };
+  if (f.uncertain && !f.edited) return { cls: 'unsure', tag: 'not sure' };
+  return { cls: 'ok', tag: f.edited ? 'edited' : '✔' };
+}
+function renderReview() {
+  const p = draft.panel, ev = evaluate();
+  const thumbs = ['cur', 'pow'].filter(k => draft.thumbs[k]).map(k => `<figure><img src="${draft.thumbs[k]}" alt=""><figcaption>${k === 'cur' ? 'Current' : 'Power'} screen</figcaption></figure>`).join('');
+  const rows = FIELD_ORDER.map(k => {
+    const f = draft.fields[k] || (draft.fields[k] = emptyField()), st = fieldState(k, ev);
+    return `<div class="fld ${st.cls}" data-k="${k}"><label>${FIELD_LABEL[k]}</label>
+      <div class="inp"><input inputmode="decimal" autocomplete="off" value="${esc(f.text)}" data-k="${k}"><span class="tag">${st.tag}</span></div>
+      ${f.seen ? `<div class="seen">I read:<img src="${f.seen}" alt=""></div>` : ''}</div>`;
+  }).join('');
+  setApp(`<header class="top"><h1>${esc(p.name)}</h1><span class="chip ${p.brand}">${p.brand === 'C' ? 'ComAp' : 'Schneider'}</span></header>
+  <main>
+    ${thumbs ? `<div class="thumbs">${thumbs}</div>` : ''}
+    <div class="card"><h2>Check the numbers</h2><div class="muted small" style="margin-bottom:6px">Compare with the screen. Fix anything wrong. KV = ${esc(S.kv)}.</div>
+      ${rows}<ul class="checks" id="checks"></ul></div>
+    <div class="card"><div class="row"><button class="sp" data-act="retake" data-s="0">Retake current</button><button class="sp" data-act="retake" data-s="1">Retake power</button></div>
+      <div class="row" style="margin-top:8px"><button class="sp danger" data-act="notinuse">Mark not in use</button></div></div>
+  </main>
+  <div class="bar"><button data-act="backhome">Cancel</button><button data-act="savehome">Save</button><button class="primary" data-act="savenext" style="flex:2">Save &amp; next panel</button></div>`);
+  updateChecks();
+}
+function updateChecks() {
+  const ev = evaluate();
+  document.querySelectorAll('.fld').forEach(el => {
+    const k = el.dataset.k, st = fieldState(k, ev);
+    el.className = 'fld ' + st.cls; el.querySelector('.tag').textContent = st.tag;
+  });
+  const ul = $('#checks'); if (!ul) return;
+  if (ev.ok) {
+    const all = FIELD_ORDER.every(k => draft.fields[k] && draft.fields[k].text.trim() !== '');
+    ul.innerHTML = all ? '<li class="good">✔ The numbers agree with each other.</li>' : '';
+  } else ul.innerHTML = ev.messages.map(m => `<li>⚠ ${esc(m)}</li>`).join('');
+}
+function commit(next) {
+  const v = currentValues();
+  for (const k of FIELD_ORDER) if (Number.isNaN(v[k])) { toast(FIELD_LABEL[k] + ' is not a number'); return false; }
+  const empty = FIELD_ORDER.filter(k => v[k] === null);
+  if (empty.length && !confirm('These are empty: ' + empty.map(k => FIELD_LABEL[k]).join(', ') + '.\nSave anyway?')) return false;
+  const ev = evaluate();
+  if (!ev.ok && !confirm('The numbers do not agree with each other:\n\n' + ev.messages.join('\n') + '\n\nSave anyway?')) return false;
+  const anyEdit = FIELD_ORDER.some(k => draft.fields[k] && draft.fields[k].edited), anyCam = FIELD_ORDER.some(k => draft.fields[k] && draft.fields[k].src === 'cam');
+  cur.rows[draft.panel.name] = { status: 'done', kV: S.kv, A: v.A, PF: v.PF, kW: v.kW, kVA: v.kVA, kVAR: v.kVAR,
+    source: anyCam ? (anyEdit ? 'camera+edited' : 'camera') : 'typed', note: ev.ok ? '' : 'numbers did not agree', t: new Date().toISOString() };
+  learnFrom();
+  saveAll();
+  const name = draft.panel.name; draft = null;
+  toast(name + ' saved');
+  if (next) { const ni = nextPending(); if (ni >= 0) { view = 'home'; render(); startReading(ni); return true; } }
+  view = 'home'; render(); return true;
+}
+function learnFrom() {
+  if (draft.panel.brand !== 'S') return;
+  let changed = false;
+  for (const k of FIELD_ORDER) {
+    const f = draft.fields[k]; if (!f || !f.glyphs || !f.edited) continue;
+    const typed = f.text.trim(); if (!/^-?[\d.]+$/.test(typed) || typed.length !== f.glyphs.length) continue;
+    f.glyphs.forEach((g, i) => {
+      const want = typed[i]; if (g.ch === want && g.ok) return;
+      const dots = g.rows.replace(/[/.]/g, '').length; if (dots < 2) return;
+      const L = DM.getLearned(); if ((L[want] || []).length >= 4) return;
+      DM.addLearned(want, g.rows); changed = true;
+    });
+  }
+  if (changed) store.set(KEY_LEARN, DM.getLearned());
+}
+
+// ------------------------------------------------------------ settings & history
+function panelsToText() { return S.panels.map(p => p.name + ', ' + p.brand).join('\n'); }
+function renderSettings() {
+  setApp(`<header class="top"><h1>Settings</h1><button data-act="backhome">Back</button></header>
+  <main>
+    <div class="card"><h2>Panels, in reading order</h2><div class="muted small" style="margin-bottom:8px">One per line: <b>NAME, S</b> for Schneider or <b>NAME, C</b> for ComAp. Move a line to change the order. Rename a panel by editing it.</div>
+      <textarea id="tPanels" spellcheck="false">${esc(panelsToText())}</textarea></div>
+    <div class="card"><h2>Column order of your spreadsheet</h2><div class="muted small" style="margin-bottom:8px">Used by “Copy row for Excel”. One panel name per line, in the order the panels appear across your sheet (each panel pastes as KV, A, PF, KW, KVA, KVAR).</div>
+      <textarea id="tSheet" spellcheck="false">${esc(S.sheet.join('\n'))}</textarea></div>
+    <div class="card"><h2>Options</h2>
+      <div class="muted small">Line voltage (KV)</div><input class="text" id="tKv" inputmode="decimal" value="${esc(S.kv)}">
+      <div class="muted small" style="margin-top:10px">ComAp generators: sign of P.F.</div>
+      <select id="tPf"><option value="kvar" ${S.pfRule === 'kvar' ? 'selected' : ''}>Same sign as kVAR (negative kVAR → negative P.F.)</option><option value="pos" ${S.pfRule === 'pos' ? 'selected' : ''}>Always positive, as the screen shows</option></select>
+      <label class="chk"><input type="checkbox" id="tAuto" ${S.auto ? 'checked' : ''}> Take the photo automatically when the guide turns green</label></div>
+    <div class="card"><h2>Reset</h2>
+      <button data-act="resetlearn" style="width:100%;margin-bottom:8px">Forget characters the app learned from my corrections</button>
+      <button data-act="resetdefaults" style="width:100%;margin-bottom:8px">Restore default panel list</button>
+      <button class="danger" data-act="wipe" style="width:100%">Delete ALL saved readings on this phone</button></div>
+    <div class="muted small" style="text-align:center">Version ${VERSION}</div>
+  </main>
+  <div class="bar"><button class="primary" data-act="savesettings">Save settings</button></div>`);
+}
+function saveSettings() {
+  const lines = $('#tPanels').value.split('\n').map(s => s.trim()).filter(Boolean), panels = [];
+  for (const ln of lines) {
+    const m = ln.match(/^(.*?)[,;|\t]\s*([SsCc])\s*$/);
+    if (!m) { toast('Line not understood: "' + ln + '" (use NAME, S or NAME, C)', 4500); return; }
+    panels.push({ name: m[1].trim().toUpperCase(), brand: m[2].toUpperCase() });
+  }
+  if (!panels.length) { toast('Add at least one panel'); return; }
+  const names = panels.map(p => p.name); if (new Set(names).size !== names.length) { toast('Two panels have the same name'); return; }
+  const kv = Number($('#tKv').value); if (!isFinite(kv) || kv <= 0) { toast('KV must be a number'); return; }
+  S.panels = panels; S.sheet = $('#tSheet').value.split('\n').map(s => s.trim().toUpperCase()).filter(Boolean);
+  S.kv = kv; S.pfRule = $('#tPf').value; S.auto = $('#tAuto').checked; saveAll(); toast('Settings saved'); view = 'home'; render();
+}
+function renderHistory() {
+  const items = rounds.map((r, i) => {
+    let d = 0, s = 0; Object.values(r.rows).forEach(x => { if (x.status === 'done') d++; else s++; });
+    return `<li><div class="n">${esc(r.time.replace('T', '  '))}<div class="vals">${d} read · ${s} not in use${r === cur ? ' · current' : ''}</div></div>
+      <button data-act="hopen" data-i="${i}">Open</button><button data-act="hcsv" data-i="${i}">CSV</button></li>`;
+  }).join('');
+  setApp(`<header class="top"><h1>History</h1><button data-act="backhome">Back</button></header><main><div class="card"><ul class="panels">${items || '<li class="muted">No rounds yet</li>'}</ul></div></main>`);
+}
+
+// ------------------------------------------------------------ events
+document.addEventListener('click', async (e) => {
+  const t = e.target.closest('[data-act]'); if (!t) return;
+  const act = t.dataset.act, i = Number(t.dataset.i);
+  switch (act) {
+    case 'read': startReading(i); break;
+    case 'skip': markSkipped(S.panels[i]); break;
+    case 'open': {
+      const p = S.panels[i], r = cur.rows[p.name];
+      if (!r) { startReading(i); break; }
+      if (r.status === 'skipped') { if (confirm(p.name + ' is marked not in use.\nRead it now?')) { delete cur.rows[p.name]; saveAll(); startReading(i); } break; }
+      draft = { i, panel: p, step: 0, fields: {}, thumbs: {}, manual: true };
+      FIELD_ORDER.forEach(k => { draft.fields[k] = { text: r[k] === null || r[k] === undefined ? '' : String(r[k]), uncertain: false, src: 'prev', edited: false }; });
+      view = 'review'; render(); break;
+    }
+    case 'settings': view = 'settings'; render(); break;
+    case 'history': view = 'history'; render(); break;
+    case 'backhome': draft = null; view = 'home'; render(); break;
+    case 'csv': download(csvName(cur), roundCsv(cur)); break;
+    case 'share': shareCsv(cur); break;
+    case 'copyrow': toast((await copyText(rowForExcel(cur))) ? 'Copied — paste into Excel' : 'Could not copy'); break;
+    case 'newround': if (confirm('Start a new round?\nThe current one stays in History.')) { newRound(); render(); } break;
+    case 'roundtime': {
+      const v = prompt('Round time (YYYY-MM-DD HH:MM)', cur.time.replace('T', ' '));
+      if (v) { const m = v.trim().match(/^(\d{4}-\d{2}-\d{2})[ T](\d{1,2}):(\d{2})$/); if (m) { cur.time = m[1] + 'T' + pad(+m[2]) + ':' + m[3]; saveAll(); render(); } else toast('Use the form 2026-10-14 13:00'); }
+      break;
+    }
+    case 'retake': draft.step = Number(t.dataset.s); view = 'home'; openCamera(); break;
+    case 'notinuse': { const p = draft.panel; markSkipped(p); break; }
+    case 'savehome': commit(false); break;
+    case 'savenext': commit(true); break;
+    case 'hopen': cur = rounds[i]; view = 'home'; render(); break;
+    case 'hcsv': download(csvName(rounds[i]), roundCsv(rounds[i])); break;
+    case 'savesettings': saveSettings(); break;
+    case 'resetlearn': DM.setLearned({}); store.set(KEY_LEARN, {}); toast('Forgotten'); break;
+    case 'resetdefaults': S.panels = defaults().panels; S.sheet = defaults().sheet; saveAll(); renderSettings(); break;
+    case 'wipe': if (confirm('Delete ALL saved readings on this phone?\nThis cannot be undone.')) { rounds = []; newRound(); view = 'home'; render(); } break;
+  }
+});
+document.addEventListener('input', (e) => {
+  const el = e.target; if (view !== 'review' || !el.matches('.fld input')) return;
+  const k = el.dataset.k, f = draft.fields[k] || (draft.fields[k] = emptyField());
+  f.text = el.value; f.edited = true;
+  if (k === 'kVAR') applyPfRuleLive();
+  updateChecks();
+});
+function applyPfRuleLive() {
+  if (draft.panel.brand !== 'C') return;
+  const before = draft.fields.PF && draft.fields.PF.text; applyPfRule();
+  if (draft.fields.PF && draft.fields.PF.text !== before) { const inp = document.querySelector('.fld[data-k="PF"] input'); if (inp) inp.value = draft.fields.PF.text; }
+}
+
+window.__app = { get state() { return { S, cur, draft, view }; }, judge, STEPS };
+render();
+})();
+
+</script>
+</body>
+</html>
